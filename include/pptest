@@ -351,10 +351,10 @@ template <class C> using testcase  = Testcase<C>;
 	}
 
 
-#define Assert_True(...)    PPTEST_ASSERT_IMPL("Assert_True",true,!!(__VA_ARGS__),__VA_ARGS__)
-#define Assert_False(...)   PPTEST_ASSERT_IMPL("Assert_False",true,!(__VA_ARGS__),__VA_ARGS__)
-#define Assert_Null(...)    PPTEST_ASSERT_IMPL("Assert_Null",true,!(__VA_ARGS__),__VA_ARGS__)
-#define Assert_NotNull(...) PPTEST_ASSERT_IMPL("Assert_NotNull",true,!!(__VA_ARGS__),__VA_ARGS__)
+#define Assert_True(...)    PPTEST_ASSERT_IMPL("Assert_True",true,bool(__VA_ARGS__),__VA_ARGS__)
+#define Assert_False(...)   PPTEST_ASSERT_IMPL("Assert_False",true,!bool(__VA_ARGS__),__VA_ARGS__)
+#define Assert_Null(...)    PPTEST_ASSERT_IMPL("Assert_Null",true,!bool(__VA_ARGS__),__VA_ARGS__)
+#define Assert_NotNull(...) PPTEST_ASSERT_IMPL("Assert_NotNull",true,bool(__VA_ARGS__),__VA_ARGS__)
 #define Assert_EQ(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_EQ",true,((LHS) == (RHS)),LHS == RHS)
 #define Assert_NEQ(LHS,RHS) PPTEST_ASSERT_IMPL("Assert_NEQ",true,((LHS) != (RHS)),LHS != RHS)
 #define Assert_GT(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_GT",true,((LHS) > (RHS)),LHS > RHS)
@@ -362,10 +362,10 @@ template <class C> using testcase  = Testcase<C>;
 #define Assert_GE(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_GE",true,((LHS) >= (RHS)),LHS >= RHS)
 #define Assert_LE(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_LE",true,((LHS) <= (RHS)),LHS <= RHS)
 
-#define Check_True(...)     PPTEST_ASSERT_IMPL("Check_True",false,!!(__VA_ARGS__),__VA_ARGS__)
-#define Check_False(...)    PPTEST_ASSERT_IMPL("Check_False",false,!(__VA_ARGS__),__VA_ARGS__)
-#define Check_Null(...)     PPTEST_ASSERT_IMPL("Check_Null",false,!(__VA_ARGS__),__VA_ARGS__)
-#define Check_NotNull(...)  PPTEST_ASSERT_IMPL("Check_NotNull",false,!!(__VA_ARGS__),__VA_ARGS__)
+#define Check_True(...)     PPTEST_ASSERT_IMPL("Check_True",false,bool(__VA_ARGS__),__VA_ARGS__)
+#define Check_False(...)    PPTEST_ASSERT_IMPL("Check_False",false,!bool(__VA_ARGS__),__VA_ARGS__)
+#define Check_Null(...)     PPTEST_ASSERT_IMPL("Check_Null",false,!bool(__VA_ARGS__),__VA_ARGS__)
+#define Check_NotNull(...)  PPTEST_ASSERT_IMPL("Check_NotNull",false,bool(__VA_ARGS__),__VA_ARGS__)
 #define Check_EQ(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_EQ",false,((LHS) == (RHS)),LHS == RHS)
 #define Check_NEQ(LHS,RHS)  PPTEST_ASSERT_IMPL("Check_NEQ",false,((LHS) != (RHS)),LHS != RHS)
 #define Check_GT(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_GT",false,((LHS) > (RHS)),LHS > RHS)
@@ -385,8 +385,11 @@ template <class C> using testcase  = Testcase<C>;
 
 // Begin_Test
 #define Begin_Test(TestID) \
-	struct TestID : public pptest::Test<TestID> \
+	class TestID : public pptest::Test<TestID> \
 	{ \
+		friend class pptest::Test<TestID>; \
+		friend class pptest::Testcase<TestID>; \
+	 public: \
 		TestID() \
 			: pptest::Test<TestID> { { __FILE__, __LINE__ }, *this, #TestID } \
 		{}
@@ -414,9 +417,11 @@ template <class C> using testcase  = Testcase<C>;
 
 // Begin_Testcase
 #define Begin_Testcase(TestID,TestcaseID) \
-		struct TestcaseID : public pptest::Testcase<TestID> \
+	 public: \
+		class TestcaseID : public pptest::Testcase<TestID> \
 		{ \
 			TestcaseID & _pptest_this_ = *this;\
+		 public: \
 			TestcaseID(TestID & test_) \
 				: Testcase<TestID> { { __FILE__, __LINE__ }, &test_, #TestcaseID } \
 			{} \
@@ -426,11 +431,14 @@ template <class C> using testcase  = Testcase<C>;
 // End_Testcase
 #define End_Testcase(TestID,TestcaseID) \
 		} TESTCASE_ID(TestcaseID) { *this }; \
-		pptest::Testcase<TestID> * const TESTCASE_PTR_ID(TestcaseID) = &TESTCASE_ID(TestcaseID);
+	 private: \
+		pptest::Testcase<TestID> * const TESTCASE_PTR_ID(TestcaseID) = &TESTCASE_ID(TestcaseID); \
+	 public:
 
 
 // Begin_Testcase_Registration
 #define Begin_Testcase_Registration(TestID) \
+	 private: \
 		static constexpr thread_local pptest::Testcase<TestID> * const TestID::* \
 		_pptest_testcase_mptrs[] \
 		{ 
@@ -445,12 +453,17 @@ template <class C> using testcase  = Testcase<C>;
 #define End_Testcase_Registration(TestID) \
 		}; \
 		static constexpr thread_local size_t _pptest_testcase_size \
-			= sizeof(_pptest_testcase_mptrs) / sizeof(_pptest_testcase_mptrs[0]);
+			= sizeof(_pptest_testcase_mptrs) / sizeof(_pptest_testcase_mptrs[0]); \
+	 public:
 
 
 // End_Test
 #define End_Test(TestID) \
-	};
+	 public: \
+		static constexpr size_t size() noexcept { return _pptest_testcase_size; } \
+	};\
+	constexpr thread_local pptest::Testcase<TestID> * const TestID::* \
+		TestID::_pptest_testcase_mptrs[TestID::_pptest_testcase_size];
 
 
 #endif // PPTEST

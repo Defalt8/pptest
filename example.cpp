@@ -110,12 +110,13 @@ End_Test(Sample_Test)
 
 int main()
 {
+	Sample_Test test;
 	// try out the different options
 	// using reporter_t = pptest::std_reporter<Sample_Test>;
 	using reporter_t = pptest::colored_reporter<Sample_Test>;
-	return Sample_Test().run_all(reporter_t(pptest::normal));
-// 	return Sample_Test().run_all(reporter_t(pptest::verbose));
-// 	return Sample_Test().run_all(reporter_t(pptest::minimal));
-// 	return Sample_Test().run_all(reporter_t(pptest::minimal1));
-// 	return Sample_Test().run_all(reporter_t(pptest::quiet));
+	return test.run_all(reporter_t(pptest::normal));
+// 	return test.run_all(reporter_t(pptest::verbose));
+// 	return test.run_all(reporter_t(pptest::minimal));
+// 	return test.run_all(reporter_t(pptest::minimal1));
+// 	return test.run_all(reporter_t(pptest::quiet));
 }
