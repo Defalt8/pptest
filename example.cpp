@@ -115,8 +115,8 @@ int main()
 	// using reporter_t = pptest::std_reporter<Sample_Test>;
 	using reporter_t = pptest::colored_reporter<Sample_Test>;
 	return test.run_all(reporter_t(pptest::normal));
-// 	return test.run_all(reporter_t(pptest::verbose));
-// 	return test.run_all(reporter_t(pptest::minimal));
-// 	return test.run_all(reporter_t(pptest::minimal1));
-// 	return test.run_all(reporter_t(pptest::quiet));
+	// return test.run_all(reporter_t(pptest::verbose));
+	// return test.run_all(reporter_t(pptest::minimal));
+	// return test.run_all(reporter_t(pptest::minimal1));
+	// return test.run_all(reporter_t(pptest::quiet));
 }
