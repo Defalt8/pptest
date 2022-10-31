@@ -1,7 +1,30 @@
 #include <pptest>
+#include <colored_reporter>
 
+// NOTE: colored_reporter implementations has only been implemented for windows.
+//   implementations for linux will come soon.
 
 Begin_Test(Sample_Test)
+
+	Pre_Run(Sample_Test)
+	{
+		// printf("\nbefore run %s...", this->name());
+	}
+
+	Post_Run(Sample_Test)
+	{
+		// printf("\nafter run... %s %d,%d", this->name(), _passed_, _failed_);
+	}
+
+	Pre_Testcase_Run(Sample_Test)
+	{
+		// printf("\n before run %s...", _testcase_.name());
+	}
+
+	Post_Testcase_Run(Sample_Test)
+	{
+		// printf("\n after run... %s %d,%d", _testcase_.name(), _passed_, _failed_);
+	}
 
 	Begin_Testcase(Sample_Test, test_case_1)
 	{
@@ -67,16 +90,32 @@ Begin_Test(Sample_Test)
 	}
 	End_Testcase(Sample_Test, test_case_4)
 
+	Begin_Testcase(Sample_Test, test_case_5)
+	{
+		int i = 5;
+		Assert_EQ(i, 5);
+		Assert_EQ(i, i);
+	}
+	End_Testcase(Sample_Test, test_case_5)
+
 
 	Begin_Testcase_Registration(Sample_Test)
 		Register_Testcase(Sample_Test, test_case_1)
 		Register_Testcase(Sample_Test, test_case_2)
 		Register_Testcase(Sample_Test, test_case_3)
 		Register_Testcase(Sample_Test, test_case_4)
+		Register_Testcase(Sample_Test, test_case_5)
 	End_Testcase_Registration(Sample_Test)
 End_Test(Sample_Test)
 
 int main()
 {
-	return Sample_Test().run_all(pptest::std_reporter<Sample_Test>({false}));
+	// try out the different options
+	// using reporter_t = pptest::std_reporter<Sample_Test>;
+	using reporter_t = pptest::colored_reporter<Sample_Test>;
+	return Sample_Test().run_all(reporter_t(pptest::normal));
+// 	return Sample_Test().run_all(reporter_t(pptest::verbose));
+// 	return Sample_Test().run_all(reporter_t(pptest::minimal));
+// 	return Sample_Test().run_all(reporter_t(pptest::minimal1));
+// 	return Sample_Test().run_all(reporter_t(pptest::quiet));
 }
