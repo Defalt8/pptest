@@ -20,7 +20,8 @@ enum class Status
 	Fail
 };
 
-static constexpr cstring_t cstr_status[]
+static constexpr cstring_t 
+cstr_status[]
 {
 	"Unknown",
 	"Pass",
@@ -28,7 +29,7 @@ static constexpr cstring_t cstr_status[]
 };
 
 
-struct FilePosition
+struct Position
 {
 	cstring_t _file = nullptr;
 	int       _line = 0;
@@ -36,23 +37,22 @@ struct FilePosition
 
 struct Assertion
 {
-	cstring_t      _command   = nullptr;
-	cstring_t      _assertion = nullptr;
-	cstring_t      _file      = nullptr;
-	int            _line      = 0;
-	bool           _breaking  = false;
-	Status         _status    = Status::Unknown;
+	cstring_t _command   = nullptr;
+	cstring_t _assertion = nullptr;
+	Position  _position  = {};
+	bool      _breaking  = false;
+	Status    _status    = Status::Unknown;
 };
 
 struct ReporterSettings
 {
-	bool _report_pass = false;
-	bool _report_fail = true;
-	bool _report_testcase_run = true;
-	bool _report_testcase_end = false;
-	bool _report_test_run = true;
-	bool _report_test_end = true;
-	bool _report_unhandled_exception = true;
+	bool report_pass = false;
+	bool report_fail = true;
+	bool report_testcase_run = true;
+	bool report_testcase_end = false;
+	bool report_test_run = true;
+	bool report_test_end = true;
+	bool report_unhandled_exception = true;
 };
 
 template <class C>
@@ -61,37 +61,25 @@ class Reporter
  public:
 	virtual ~Reporter() = default;
 
-	virtual void report_test_run(Test<C> & test_) noexcept
-	{}
-
-	virtual void report_test_end(Test<C> & test_, int passed_, int failed_) noexcept
-	{}
-
-	virtual void report_testcase_run(Test<C> & test_, Testcase<C> & testcase_) noexcept
-	{}
-
-	virtual void report_testcase_end(Test<C> & test_, Testcase<C> & testcase_, int passed_, int failed_) noexcept
-	{}
-
-	virtual void report_pass(Test<C> & test_, Testcase<C> & testcase_, Assertion const & assertion) noexcept
-	{}
-
-	virtual void report_fail(Test<C> & test_, Testcase<C> & testcase_, Assertion const & assertion) noexcept
-	{}
-
-	virtual void report_unhandled_exception(Test<C> & test_, Testcase<C> & testcase_) noexcept
-	{}
+	virtual void report_test_run(Test<C> & test_) noexcept {}
+	virtual void report_test_end(Test<C> & test_, int passed_, int failed_) noexcept {}
+	virtual void report_testcase_run(Test<C> & test_, Testcase<C> & testcase_) noexcept {}
+	virtual void report_testcase_end(Test<C> & test_, Testcase<C> & testcase_, int passed_, int failed_) noexcept {}
+	virtual void report_pass(Test<C> & test_, Testcase<C> & testcase_, Assertion const & assertion) noexcept {}
+	virtual void report_fail(Test<C> & test_, Testcase<C> & testcase_, Assertion const & assertion) noexcept {}
+	virtual void report_unhandled_exception(Test<C> & test_, Testcase<C> & testcase_) noexcept {}
 
 };
 
 template <class C>
 class StdReporter : public Reporter<C>
 {
-	void _report_assertion(Assertion const & assertion)
+	void 
+	_report_assertion(Assertion const & assertion)
 	{
 		printf("      | %-4s | %32s:%-5d | %s(%s)\n"
 			, cstr_status[int(assertion._status)]
-			, assertion._file, assertion._line
+			, assertion._position._file, assertion._position._line
 			, assertion._command, assertion._assertion);
 		fflush(stdout);
 	}
@@ -107,27 +95,30 @@ class StdReporter : public Reporter<C>
 		: _settings { settings_ }
 	{}
 
-	virtual void report_test_run(Test<C> & test_) noexcept override
+	virtual void 
+	report_test_run(Test<C> & test_) noexcept override
 	{
-		if(_settings._report_test_run)
+		if(_settings.report_test_run)
 		{
 			printf("\n- %s: \n", test_.name());
 			fflush(stdout);
 		}
 	}
 
-	virtual void report_test_end(Test<C> & test_, int passed_, int failed_) noexcept override
+	virtual void 
+	report_test_end(Test<C> & test_, int passed_, int failed_) noexcept override
 	{
-		if(_settings._report_test_end)
+		if(_settings.report_test_end)
 		{
 			printf("\n--- End of %s | %d/%d passed.\n", test_.name(), passed_, (failed_+passed_));
 			fflush(stdout);
 		}
 	}
 
-	virtual void report_testcase_run(Test<C> & test_, Testcase<C> & testcase_) noexcept override
+	virtual void 
+	report_testcase_run(Test<C> & test_, Testcase<C> & testcase_) noexcept override
 	{
-		if(_settings._report_testcase_run)
+		if(_settings.report_testcase_run)
 		{
 			printf("\n  - %s \n", testcase_.name());
 			fflush(stdout);
@@ -135,32 +126,36 @@ class StdReporter : public Reporter<C>
 	}
 	
 
-	virtual void report_testcase_end(Test<C> & test_, Testcase<C> & testcase_, int passed_, int failed_) noexcept override
+	virtual void 
+	report_testcase_end(Test<C> & test_, Testcase<C> & testcase_, int passed_, int failed_) noexcept override
 	{
-		if(_settings._report_testcase_end)
+		if(_settings.report_testcase_end)
 		{
 			printf("  --- end of %s  | %d/%d passed.\n", testcase_.name(), passed_, (failed_+passed_));
 			fflush(stdout);
 		}
 	}
 
-	virtual void report_pass(Test<C> & test_, Testcase<C> & testcase_, Assertion const & assertion) noexcept override
+	virtual void 
+	report_pass(Test<C> & test_, Testcase<C> & testcase_, Assertion const & assertion) noexcept override
 	{
-		if(_settings._report_pass)
+		if(_settings.report_pass)
 			_report_assertion(assertion);
 	}
 
-	virtual void report_fail(Test<C> & test_, Testcase<C> & testcase_, Assertion const & assertion) noexcept override
+	virtual void 
+	report_fail(Test<C> & test_, Testcase<C> & testcase_, Assertion const & assertion) noexcept override
 	{
-		if(_settings._report_fail)
+		if(_settings.report_fail)
 			_report_assertion(assertion);
 	}
 
-	virtual void report_unhandled_exception(Test<C> & test_, Testcase<C> & testcase_) noexcept override
+	virtual void 
+	report_unhandled_exception(Test<C> & test_, Testcase<C> & testcase_) noexcept override
 	{
-		if(_settings._report_unhandled_exception)
+		if(_settings.report_unhandled_exception)
 		{
-			printf("      | Unhandled Exception | %s:%d\n", testcase_.file_position()._file, testcase_.file_position()._line);
+			printf("      | Unhandled Exception | %s:%d\n", testcase_.position()._file, testcase_.position()._line);
 			fflush(stdout);
 		}
 	}
@@ -171,42 +166,62 @@ class StdReporter : public Reporter<C>
 template <class C>
 class Test
 {
-	FilePosition _file_position {};
-	C          * _test = nullptr;
-	cstring_t    _name = nullptr;
+	Position   _position {};
+	C        * _test = nullptr;
+	cstring_t  _name = nullptr;
 
+	friend class Testcase<C>;
+	
  protected:
-	Test(FilePosition const & file_position_, C & test_, cstring_t name_)
-		: _file_position { file_position_ }
+	Test(Position const & position_, C & test_, cstring_t name_)
+		: _position { position_ }
 		, _test { &test_ }
 		, _name { name_ }
 	{}
 
+	void 
+	_on_pass(Reporter<C> & reporter_, Testcase<C> & testcase_, Assertion const & assertion)
+	{
+		reporter_.report_pass(*this, testcase_, assertion);
+	}
+
+	void 
+	_on_fail(Reporter<C> & reporter_, Testcase<C> & testcase_, Assertion const & assertion)
+	{
+		reporter_.report_fail(*this, testcase_, assertion);
+		if(assertion._breaking)
+			throw assertion;
+	}
+
  public:
 	virtual ~Test() = default;
 	 
-	template <template <typename...> class R> 
-	int run_all(R<C> && reporter_)
+	template <template <typename...> class R,
+		typename = decltype(static_cast<Reporter<C> *>((R<C> *)nullptr))> 
+	int 
+	run_all(R<C> && reporter_)
 	{
 		return this->run_all(static_cast<Reporter<C> &>(reporter_));
 	}
 	 
-	int run_all()
+	int 
+	run_all()
 	{
 		Reporter<C> no_reporting;
 		return this->run_all(no_reporting);
 	}
 
-	int run_all(Reporter<C> & reporter_)
+	int 
+	run_all(Reporter<C> & reporter_)
 	{
 		auto & test_ = *_test; 
 		auto & testcases_ = test_._testcase_mptrs;
-		reporter_.report_test_run(test_);
 		int passed_ = 0;
 		int failed_ = 0;
 		int last_passed_ = 0;
 		int last_failed_ = 0;
 		bool break_ = false;
+		reporter_.report_test_run(test_);
 		for(auto & testcase_ptr : testcases_)
 		{
 			auto & testcase = *(test_.*testcase_ptr);
@@ -234,39 +249,30 @@ class Test
 		return failed_;
 	}
 	
-	void _on_pass(Reporter<C> & reporter_, Testcase<C> & testcase_, Assertion const & assertion)
-	{
-		reporter_.report_pass(*this, testcase_, assertion);
-	}
-
-	void _on_fail(Reporter<C> & reporter_, Testcase<C> & testcase_, Assertion const & assertion)
-	{
-		reporter_.report_fail(*this, testcase_, assertion);
-		if(assertion._breaking)
-			throw assertion;
-	}
-
-	FilePosition const & file_position() const { return _file_position; }
-	C       * test() const { return _test; }
-	cstring_t name() const { return _name; }
+	Position const & position() const noexcept { return _position; }
+	C       * test() const noexcept { return _test; }
+	cstring_t name() const noexcept { return _name; }
 
 };
 
 template <class C>
 class Testcase
 {
-	FilePosition _file_position {};
-	Test<C>    * _test = nullptr;
-	cstring_t    _name = nullptr;
+	Position   _position = {};
+	C        * _test     = nullptr;
+	cstring_t  _name     = nullptr;
 
+	friend class Test<C>;
+	
  protected:
-	Testcase(FilePosition const & file_position_, Test<C> * test_, cstring_t name_)
-		: _file_position { file_position_ }
+	Testcase(Position const & position_, C * test_, cstring_t name_)
+		: _position { position_ }
 		, _test { test_ }
 		, _name { name_ }
 	{}
 	
-	void _on_assert(bool pass_, Reporter<C> & reporter_, int & passed_, int & failed_, Assertion assertion)
+	void 
+	_on_assert(bool pass_, Reporter<C> & reporter_, int & passed_, int & failed_, Assertion assertion)
 	{
 		if(pass_)
 		{
@@ -287,25 +293,28 @@ class Testcase
 
 	virtual void run(Reporter<C> & reporter_, int & _passed_, int & _failed_) = 0;
 	
-	FilePosition const & file_position() const { return _file_position; }
-	Test<C> * test() const { return _test; }
-	cstring_t name() const { return _name; }
+	Position const & position() const noexcept { return _position; }
+	C       * test() const noexcept { return _test; }
+	cstring_t name() const noexcept { return _name; }
 
 };
 
 
 // snake-case aliases
 using status    = Status;
+using position  = Position;
 using assertion = Assertion;
 using reporter_settings = ReporterSettings;
 template <class C> using reporter      = Reporter<C>;
 template <class C> using std_reporter  = StdReporter<C>;
+template <class C> using test      = Test<C>;
+template <class C> using testcase  = Testcase<C>;
 
 } // namespace pptest
 
 
 #define Assert_IMPL(P, Command, Breaking, ...) \
-		this->_on_assert(P(__VA_ARGS__), _pptest_reporter_, _pptest_passed_, _pptest_failed_, pptest::Assertion { Command,#__VA_ARGS__, __FILE__, __LINE__, Breaking })
+		this->_on_assert(P(__VA_ARGS__), _pptest_reporter_, _pptest_passed_, _pptest_failed_, pptest::Assertion { Command,#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking })
 
 #define CHECK_THROWER(...) __VA_ARGS__
 #define ASSERT_THROWER(...) throw __VA_ARGS__;
