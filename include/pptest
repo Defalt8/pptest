@@ -54,7 +54,14 @@ struct ReporterSettings
 	bool report_test_run = true;
 	bool report_test_end = true;
 	bool report_unhandled_exception = true;
+	
 };
+
+static constexpr ReporterSettings quiet     = { true, false, false, false, false, false, false, false };
+static constexpr ReporterSettings verbose   = { true, true, true, true, true, true, true, true };
+static constexpr ReporterSettings minimal   = { true, false, false, false, false, true, true, false };
+static constexpr ReporterSettings minimal1  = { true, false, false, true, true, true, true, false };
+static constexpr ReporterSettings normal    = { true, false, true, true, true, true, true, true };
 
 template <class C>
 class Reporter
@@ -72,13 +79,14 @@ class Reporter
 
 };
 
+
 template <class C>
 class StdReporter : public Reporter<C>
 {
 	void 
 	_report_assertion(Assertion const & assertion)
 	{
-		printf("      | %-4s | %32s:%-5d | %s(%s)\n"
+		printf("\n      | %-4s | %32s:%-5d | %s(%s)"
 			, cstr_status[int(assertion._status)]
 			, assertion._position._file, assertion._position._line
 			, assertion._command, assertion._assertion);
@@ -101,7 +109,7 @@ class StdReporter : public Reporter<C>
 	{
 		if(_settings.report_test_run)
 		{
-			printf("\n- %s: \n", test_.name());
+			printf("\n%s: ", test_.name());
 			fflush(stdout);
 		}
 	}
@@ -111,10 +119,13 @@ class StdReporter : public Reporter<C>
 	{
 		if(_settings.report_test_end)
 		{
-			if(_settings.optimistic)
-				printf("\n--- End of %s | %d/%d passed.\n", test_.name(), passed_, (failed_+passed_));
-			else
-				printf("\n--- End of %s | %d/%d failed.\n", test_.name(), failed_, (failed_+passed_));
+			bool minimal_ = !(_settings.report_fail || _settings.report_pass || _settings.report_testcase_run || _settings.report_testcase_end || _settings.report_unhandled_exception);
+			if(!minimal_ || !_settings.report_test_run)
+				printf("\n%s", test_.name());
+			printf(" | %d/%d %s.\n"
+				, _settings.optimistic ? passed_ : failed_
+				, (failed_+passed_)
+				, _settings.optimistic ? "passed" : "failed");
 			fflush(stdout);
 		}
 	}
@@ -124,7 +135,7 @@ class StdReporter : public Reporter<C>
 	{
 		if(_settings.report_testcase_run)
 		{
-			printf("\n  - %s \n", testcase_.name());
+			printf("\n   %s ", testcase_.name());
 			fflush(stdout);
 		}
 	}
@@ -135,7 +146,13 @@ class StdReporter : public Reporter<C>
 	{
 		if(_settings.report_testcase_end)
 		{
-			printf("  --- end of %s  | %d/%d passed.\n", testcase_.name(), passed_, (failed_+passed_));
+			bool minimal_ = !(_settings.report_fail || _settings.report_pass || _settings.report_unhandled_exception);
+			if(!minimal_ || !_settings.report_testcase_run)
+				printf("\n   %s", testcase_.name());
+			printf(" | %d/%d %s."
+				, _settings.optimistic ? passed_ : failed_
+				, (failed_+passed_)
+				, _settings.optimistic ? "passed" : "failed");
 			fflush(stdout);
 		}
 	}
@@ -159,7 +176,7 @@ class StdReporter : public Reporter<C>
 	{
 		if(_settings.report_unhandled_exception)
 		{
-			printf("      | Unhandled Exception | %s:%d\n", testcase_.position()._file, testcase_.position()._line);
+			printf("\n      | Unhandled Exception | %s:%d", testcase_.position()._file, testcase_.position()._line);
 			fflush(stdout);
 		}
 	}
@@ -200,6 +217,11 @@ class Test
  public:
 	virtual ~Test() = default;
 	 
+	virtual void pre_run()  {}
+	virtual void post_run(int passed_, int failed_) noexcept {}
+	virtual void pre_testcase_run(pptest::Testcase<C> & testcase_)  {}
+	virtual void post_testcase_run(pptest::Testcase<C> & testcase_, int passed_, int failed_) noexcept {}
+
 	template <template <typename...> class R,
 		typename = decltype(static_cast<Reporter<C> *>((R<C> *)nullptr))> 
 	int 
@@ -219,19 +241,21 @@ class Test
 	run_all(Reporter<C> & reporter_)
 	{
 		auto & test_ = *_test; 
-		auto & testcases_ = test_._testcase_mptrs;
+		auto & testcases_ = test_._pptest_testcase_mptrs;
 		int passed_ = 0;
 		int failed_ = 0;
-		int last_passed_ = 0;
-		int last_failed_ = 0;
+		test_.pre_run();
 		reporter_.report_test_run(test_);
 		for(auto & testcase_ptr : testcases_)
 		{
+			int testcase_passed_ = 0;
+			int testcase_failed_ = 0;
 			auto & testcase = *(test_.*testcase_ptr);
 			reporter_.report_testcase_run(test_, testcase);
 			try 
 			{
-				testcase.run(reporter_, passed_, failed_);
+				pre_testcase_run(testcase);
+				testcase.run(reporter_, testcase_passed_, testcase_failed_);
 			}
 			catch(Assertion const & ex)
 			{}
@@ -240,12 +264,13 @@ class Test
 				++failed_;
 				reporter_.report_unhandled_exception(test_, testcase);
 			}
-			reporter_.report_testcase_end(test_, testcase
-				, (passed_ - last_passed_), (failed_ - last_failed_));
-			last_passed_ = passed_;
-			last_failed_ = failed_;
+			post_testcase_run(testcase, testcase_passed_, testcase_failed_);
+			reporter_.report_testcase_end(test_, testcase, testcase_passed_, testcase_failed_);
+			passed_ += testcase_passed_;
+			failed_ += testcase_failed_;
 		}
-		reporter_.report_test_end(test_, last_passed_, last_failed_);
+		reporter_.report_test_end(test_, passed_, failed_);
+		test_.post_run(passed_, failed_);
 		return failed_;
 	}
 	
@@ -314,14 +339,14 @@ template <class C> using testcase  = Testcase<C>;
 
 
 #define PPTEST_ASSERT_IMPL(Command_, Breaking_, Pass_, ...) \
-		_pptest_this_._on_assert(Pass_, _pptest_reporter_, _pptest_passed_, _pptest_failed_, \
+		_pptest_this_._on_assert(Pass_, _reporter_, _passed_, _failed_, \
 			pptest::Assertion { Command_,#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking_ })
 
 #define PPTEST_ASSERT_THROW_IMPL(Command_, Breaking_, ExpectThrow_, Exception_, ...) \
 	{ \
 		bool caught_ = false;\
 		try { __VA_ARGS__; } catch(Exception_) { caught_ = true; } \
-		_pptest_this_._on_assert((ExpectThrow_ == caught_), _pptest_reporter_, _pptest_passed_, _pptest_failed_, \
+		_pptest_this_._on_assert((ExpectThrow_ == caught_), _reporter_, _passed_, _failed_, \
 			pptest::Assertion { Command_,#Exception_", "#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking_ }); \
 	}
 
@@ -354,8 +379,8 @@ template <class C> using testcase  = Testcase<C>;
 #define Check_Throw(Exception,...)    PPTEST_ASSERT_THROW_IMPL("Check_Throw",false,true,Exception,__VA_ARGS__)
 #define Check_NoThrow(Exception,...)    PPTEST_ASSERT_THROW_IMPL("Check_NoThrow",false,false,Exception,__VA_ARGS__)
 
-#define TESTCASE_ID(...) _tc_##__VA_ARGS__
-#define TESTCASE_PTR_ID(...) _tcptr_##__VA_ARGS__
+#define TESTCASE_ID(...) _pptest_tc_##__VA_ARGS__
+#define TESTCASE_PTR_ID(...) _pptest_tcptr_##__VA_ARGS__
 
 
 // Begin_Test
@@ -367,6 +392,26 @@ template <class C> using testcase  = Testcase<C>;
 		{}
 
 
+// Pre_Run
+#define Pre_Run(TestID) \
+	void pre_run() override
+
+
+// Post_Run
+#define Post_Run(TestID) \
+	void post_run(int _passed_, int _failed_) noexcept override
+
+
+// Pre_Testcase_Run
+#define Pre_Testcase_Run(TestID) \
+	void pre_testcase_run(pptest::Testcase<TestID> & _testcase_) override
+
+
+// Post_Testcase_Run
+#define Post_Testcase_Run(TestID) \
+	void post_testcase_run(pptest::Testcase<TestID> & _testcase_, int _passed_, int _failed_) noexcept override
+
+
 // Begin_Testcase
 #define Begin_Testcase(TestID,TestcaseID) \
 		struct TestcaseID : public pptest::Testcase<TestID> \
@@ -375,7 +420,7 @@ template <class C> using testcase  = Testcase<C>;
 			TestcaseID(TestID & test_) \
 				: Testcase<TestID> { { __FILE__, __LINE__ }, &test_, #TestcaseID } \
 			{} \
-			void run(pptest::Reporter<TestID> & _pptest_reporter_, int & _pptest_passed_, int & _pptest_failed_) override 
+			void run(pptest::Reporter<TestID> & _reporter_, int & _passed_, int & _failed_) override 
 
 
 // End_Testcase
@@ -387,7 +432,7 @@ template <class C> using testcase  = Testcase<C>;
 // Begin_Testcase_Registration
 #define Begin_Testcase_Registration(TestID) \
 		static constexpr thread_local pptest::Testcase<TestID> * const TestID::* \
-		_testcase_mptrs[] \
+		_pptest_testcase_mptrs[] \
 		{ 
 
 
@@ -399,8 +444,8 @@ template <class C> using testcase  = Testcase<C>;
 // End_Testcase_Registration
 #define End_Testcase_Registration(TestID) \
 		}; \
-		static constexpr thread_local size_t _testcase_size \
-			= sizeof(_testcase_mptrs) / sizeof(_testcase_mptrs[0]);
+		static constexpr thread_local size_t _pptest_testcase_size \
+			= sizeof(_pptest_testcase_mptrs) / sizeof(_pptest_testcase_mptrs[0]);
 
 
 // End_Test
