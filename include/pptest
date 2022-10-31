@@ -46,6 +46,7 @@ struct Assertion
 
 struct ReporterSettings
 {
+	bool optimistic  = true;
 	bool report_pass = false;
 	bool report_fail = true;
 	bool report_testcase_run = true;
@@ -110,7 +111,10 @@ class StdReporter : public Reporter<C>
 	{
 		if(_settings.report_test_end)
 		{
-			printf("\n--- End of %s | %d/%d passed.\n", test_.name(), passed_, (failed_+passed_));
+			if(_settings.optimistic)
+				printf("\n--- End of %s | %d/%d passed.\n", test_.name(), passed_, (failed_+passed_));
+			else
+				printf("\n--- End of %s | %d/%d failed.\n", test_.name(), failed_, (failed_+passed_));
 			fflush(stdout);
 		}
 	}
@@ -220,7 +224,6 @@ class Test
 		int failed_ = 0;
 		int last_passed_ = 0;
 		int last_failed_ = 0;
-		bool break_ = false;
 		reporter_.report_test_run(test_);
 		for(auto & testcase_ptr : testcases_)
 		{
@@ -235,15 +238,12 @@ class Test
 			catch(...)
 			{
 				++failed_;
-				break_ = true;
 				reporter_.report_unhandled_exception(test_, testcase);
 			}
 			reporter_.report_testcase_end(test_, testcase
 				, (passed_ - last_passed_), (failed_ - last_failed_));
 			last_passed_ = passed_;
 			last_failed_ = failed_;
-			if(break_)
-				break;
 		}
 		reporter_.report_test_end(test_, last_passed_, last_failed_);
 		return failed_;
@@ -313,18 +313,46 @@ template <class C> using testcase  = Testcase<C>;
 } // namespace pptest
 
 
-#define Assert_IMPL(P, Command, Breaking, ...) \
-		this->_on_assert(P(__VA_ARGS__), _pptest_reporter_, _pptest_passed_, _pptest_failed_, pptest::Assertion { Command,#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking })
+#define PPTEST_ASSERT_IMPL(Command_, Breaking_, Pass_, ...) \
+		_pptest_this_._on_assert(Pass_, _pptest_reporter_, _pptest_passed_, _pptest_failed_, \
+			pptest::Assertion { Command_,#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking_ })
 
-#define CHECK_THROWER(...) __VA_ARGS__
-#define ASSERT_THROWER(...) throw __VA_ARGS__;
+#define PPTEST_ASSERT_THROW_IMPL(Command_, Breaking_, ExpectThrow_, Exception_, ...) \
+	{ \
+		bool caught_ = false;\
+		try { __VA_ARGS__; } catch(Exception_) { caught_ = true; } \
+		_pptest_this_._on_assert((ExpectThrow_ == caught_), _pptest_reporter_, _pptest_passed_, _pptest_failed_, \
+			pptest::Assertion { Command_,#Exception_", "#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking_ }); \
+	}
 
-#define Check_True(...) Assert_IMPL(,"Check_True",false,__VA_ARGS__)
-#define Assert_True(...) Assert_IMPL(,"Assert_True",true,__VA_ARGS__)
 
-#define Check_False(...) Assert_IMPL(!,"Check_False",false,__VA_ARGS__)
-#define Assert_False(...) Assert_IMPL(!,"Assert_False",true,__VA_ARGS__)
+#define Assert_True(...)    PPTEST_ASSERT_IMPL("Assert_True",true,!!(__VA_ARGS__),__VA_ARGS__)
+#define Assert_False(...)   PPTEST_ASSERT_IMPL("Assert_False",true,!(__VA_ARGS__),__VA_ARGS__)
+#define Assert_Null(...)    PPTEST_ASSERT_IMPL("Assert_Null",true,!(__VA_ARGS__),__VA_ARGS__)
+#define Assert_NotNull(...) PPTEST_ASSERT_IMPL("Assert_NotNull",true,!!(__VA_ARGS__),__VA_ARGS__)
+#define Assert_EQ(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_EQ",true,((LHS) == (RHS)),LHS == RHS)
+#define Assert_NEQ(LHS,RHS) PPTEST_ASSERT_IMPL("Assert_NEQ",true,((LHS) != (RHS)),LHS != RHS)
+#define Assert_GT(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_GT",true,((LHS) > (RHS)),LHS > RHS)
+#define Assert_LT(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_LT",true,((LHS) < (RHS)),LHS < RHS)
+#define Assert_GE(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_GE",true,((LHS) >= (RHS)),LHS >= RHS)
+#define Assert_LE(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_LE",true,((LHS) <= (RHS)),LHS <= RHS)
 
+#define Check_True(...)     PPTEST_ASSERT_IMPL("Check_True",false,!!(__VA_ARGS__),__VA_ARGS__)
+#define Check_False(...)    PPTEST_ASSERT_IMPL("Check_False",false,!(__VA_ARGS__),__VA_ARGS__)
+#define Check_Null(...)     PPTEST_ASSERT_IMPL("Check_Null",false,!(__VA_ARGS__),__VA_ARGS__)
+#define Check_NotNull(...)  PPTEST_ASSERT_IMPL("Check_NotNull",false,!!(__VA_ARGS__),__VA_ARGS__)
+#define Check_EQ(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_EQ",false,((LHS) == (RHS)),LHS == RHS)
+#define Check_NEQ(LHS,RHS)  PPTEST_ASSERT_IMPL("Check_NEQ",false,((LHS) != (RHS)),LHS != RHS)
+#define Check_GT(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_GT",false,((LHS) > (RHS)),LHS > RHS)
+#define Check_LT(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_LT",false,((LHS) < (RHS)),LHS < RHS)
+#define Check_GE(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_GE",false,((LHS) >= (RHS)),LHS >= RHS)
+#define Check_LE(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_LE",false,((LHS) <= (RHS)),LHS <= RHS)
+
+#define Assert_Throw(Exception,...)    PPTEST_ASSERT_THROW_IMPL("Assert_Throw",true,true,Exception,__VA_ARGS__)
+#define Assert_NoThrow(Exception,...)    PPTEST_ASSERT_THROW_IMPL("Assert_NoThrow",true,false,Exception,__VA_ARGS__)
+
+#define Check_Throw(Exception,...)    PPTEST_ASSERT_THROW_IMPL("Check_Throw",false,true,Exception,__VA_ARGS__)
+#define Check_NoThrow(Exception,...)    PPTEST_ASSERT_THROW_IMPL("Check_NoThrow",false,false,Exception,__VA_ARGS__)
 
 #define TESTCASE_ID(...) _tc_##__VA_ARGS__
 #define TESTCASE_PTR_ID(...) _tcptr_##__VA_ARGS__
@@ -343,6 +371,7 @@ template <class C> using testcase  = Testcase<C>;
 #define Begin_Testcase(TestID,TestcaseID) \
 		struct TestcaseID : public pptest::Testcase<TestID> \
 		{ \
+			TestcaseID & _pptest_this_ = *this;\
 			TestcaseID(TestID & test_) \
 				: Testcase<TestID> { { __FILE__, __LINE__ }, &test_, #TestcaseID } \
 			{} \
