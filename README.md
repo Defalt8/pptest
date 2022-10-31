@@ -1,6 +1,6 @@
 # pptest
 
-A header-only testing library for C++.
+An abstract reporting header-only unit-testing library for C++.
 
 *STATUS:* in-development
 
@@ -32,9 +32,12 @@ Begin_Test(Sample_Test)
     Begin_Testcase(Sample_Test, test_case_2)
     {
         Check_True(true);
-        Check_True(false);
-        Assert_Throws(throw "dummy";);
-        Check_Nothrow(throw "dummy";);
+        [&]()
+        {
+            Check_Null(nullptr);
+            Assert_Throws(char const *,throw "dummy");
+        }();
+        Check_Nothrow(int,throw "dummy");
     }
     End_Testcase(Sample_Test, test_case_2)
 
@@ -49,7 +52,7 @@ int main()
 {
     Sample_Test test;
     return test.run_all(pptest::StdReporter<Sample_Test>());
-    return test.run_all(pptest::MyCustomReporter<Sample_Test>()); // your implementation
+    return test.run_all(MyCustomReporter<Sample_Test>()); // your implementation
     return test.run_all(pptest::std_reporter<Sample_Test>()); // snake-case alt
     return test.run_all(); // for no report
 }
