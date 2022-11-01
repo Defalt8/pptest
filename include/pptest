@@ -596,19 +596,14 @@ template <class C> using testcase  = Testcase<C>;
 
 // End_Testcase_Registration
 #define End_Testcase_Registration(TestID) \
-		; \
-		static constexpr thread_local size_t _pptest_testcase_size \
-			= sizeof(_pptest_testcase_mptrs) / sizeof(_pptest_testcase_mptrs[0]); \
-	 public:
+		;
 
 
 // End_Test
 #define End_Test(TestID) \
-	 public: \
-		static constexpr size_t size() noexcept { return _pptest_testcase_size; } \
 	};\
 	constexpr thread_local pptest::Testcase<TestID> * const TestID::* \
-		TestID::_pptest_testcase_mptrs[TestID::_pptest_testcase_size];
+		TestID::_pptest_testcase_mptrs[];
 
 
 #endif // PPTEST
