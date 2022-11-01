@@ -1,0 +1,273 @@
+#pragma once
+#ifndef PPTEST_COLORED_PRINTER
+#define PPTEST_COLORED_PRINTER
+#include <cstdarg>
+#include "pptest"
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(__CYGWIN__)
+#	define PPTEST_WINDOWS
+#	define VC_EXTRALEAN 1
+#	define WIN32_LEAN_AND_MEAN 1
+#	include <Windows.h>
+#endif
+
+namespace pptest {
+
+#ifdef PPTEST_WINDOWS
+
+	enum class Color  : unsigned char
+	{
+		  Black       = 0x0
+		, White       = 0x7
+		, Blue        = 0x9
+		, Green       = 0xA
+		, Cyan        = 0xB
+		, Red         = 0xC
+		, Magenta     = 0xD
+		, Yellow      = 0xE
+		, Gray        = 0x8
+		, DarkBlue    = 0x1
+		, DarkGreen   = 0x2
+		, DarkCyan    = 0x3
+		, DarkRed     = 0x4
+		, DarkMagenta = 0x5
+		, DarkYellow  = 0x6
+		, Default     = 0xF
+	};
+
+	void 
+	clprintf(Color color, const char * format, ...)
+	{
+		HANDLE stdout_handle;
+		WORD old_color_attrs;
+		if(color != Color::Default)
+		{
+			stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+			CONSOLE_SCREEN_BUFFER_INFO buffer_info;
+			GetConsoleScreenBufferInfo(stdout_handle, &buffer_info);
+			old_color_attrs = buffer_info.wAttributes;
+			WORD new_color = (WORD)(color);
+			SetConsoleTextAttribute(stdout_handle, new_color);
+		}
+		va_list vargs;
+		va_start(vargs, format);
+		vprintf(format, vargs);
+		va_end(vargs);
+		if(color != Color::Default)
+			SetConsoleTextAttribute(stdout_handle, old_color_attrs);
+	}
+
+#else
+
+	enum class Color : unsigned char
+	{
+		  Black       = 0x0
+		, White       = 0x1
+		, Blue        = 0x2
+		, Green       = 0x3
+		, Cyan        = 0x4
+		, Red         = 0x5
+		, Magenta     = 0x6
+		, Yellow      = 0x7
+		, Gray        = 0x8
+		, DarkBlue    = 0x9
+		, DarkGreen   = 0xA
+		, DarkCyan    = 0xB
+		, DarkRed     = 0xC
+		, DarkMagenta = 0xD
+		, DarkYellow  = 0xE
+		, Default     = 0xF
+	};
+	
+	void
+	reset_color()
+	{
+		printf("\x1b[0m");
+	}
+	
+	void
+	set_color(Color color)
+	{
+		char const * cstr_color = "";
+		switch(color)
+		{
+			case Color::Black:       cstr_color = "\x1b[1;30m"; break;
+			case Color::White:       cstr_color = "\x1b[1;37m"; break;
+			case Color::Red:         cstr_color = "\x1b[1;31m"; break;
+			case Color::Green:       cstr_color = "\x1b[1;32m"; break;
+			case Color::Yellow:      cstr_color = "\x1b[1;33m"; break;
+			case Color::Blue:        cstr_color = "\x1b[1;34m"; break;
+			case Color::Magenta:     cstr_color = "\x1b[1;35m"; break;
+			case Color::Cyan:        cstr_color = "\x1b[1;36m"; break;
+			case Color::Gray:        cstr_color = "\x1b[0;37m"; break;
+			case Color::DarkRed:     cstr_color = "\x1b[0;31m"; break;
+			case Color::DarkGreen:   cstr_color = "\x1b[0;32m"; break;
+			case Color::DarkYellow:  cstr_color = "\x1b[0;33m"; break;
+			case Color::DarkBlue:    cstr_color = "\x1b[0;34m"; break;
+			case Color::DarkMagenta: cstr_color = "\x1b[0;35m"; break;
+			case Color::DarkCyan:    cstr_color = "\x1b[0;36m"; break;
+			case Color::Default:
+			default: cstr_color = "\x1b[0m"; break;
+		}
+		printf("%s", cstr_color);
+	}
+
+	void 
+	clprintf(Color color, const char* format, ...)
+	{
+		va_list vargs;
+		va_start(vargs, format);
+		set_color(color);
+		vprintf(format, vargs);
+		reset_color();
+		va_end(vargs);
+	}
+
+#endif
+
+template <class C>
+class ColoredPrinter : public Reporter<C>
+{
+	void
+	_indent(int count_)
+	{
+		while(count_-- > 0)
+			clprintf(Color::Default, "    ");
+	}
+
+	void 
+	_report_assertion(Assertion const & assertion, int depth_ = 0)
+	{
+		clprintf(Color::Default, "\n");
+		_indent(depth_ * 2 + 2);
+		clprintf(assertion.status == Status::Pass ? Color::Green : Color::Red,
+			"| %-4s |", cstr_status[int(assertion.status)]);
+		clprintf(assertion.status == Status::Pass ? Color::Gray : Color::White,
+			" %s(%s) -- ", assertion.command, assertion.assertion);
+		clprintf(assertion.status == Status::Pass ? Color::Gray : Color::Blue,
+			"%s:%d ", assertion.position.file, assertion.position.line);
+		fflush(stdout);
+	}
+
+	ReporterSettings _settings {};
+
+ public:
+	virtual ~ColoredPrinter() = default;
+
+	ColoredPrinter() = default;
+
+	ColoredPrinter(ReporterSettings const & settings_)
+		: _settings { settings_ }
+	{}
+
+	virtual void 
+	report_test_run(Test<C> & test_, int depth_ = 0) noexcept override
+	{
+		if(_settings.report_test_run)
+		{
+			clprintf(Color::Default, "\n");
+			_indent(depth_ * 2);
+			clprintf(Color::Cyan, "%s: ", test_.name());
+			fflush(stdout);
+		}
+	}
+
+	virtual void 
+	report_test_end(Test<C> & test_, int passing_, int failing_, int depth_ = 0) noexcept override
+	{
+		if(_settings.report_test_end)
+		{
+			clprintf(Color::Default, "\n");
+			_indent(depth_ * 2);
+			clprintf(failing_ == 0 ? Color::Green : Color::Red, "[ %s ] "
+				, failing_ == 0 ? "Pass" : "Fail");
+			clprintf(failing_ == 0 ? Color::DarkCyan : Color::Cyan, "%s "
+				, test_.name());
+			clprintf(failing_ == 0 ? Color::Gray : Color::White, "-- %d/%d %s "
+				, _settings.optimistic ? passing_ : failing_
+				, (failing_+passing_)
+				, _settings.optimistic ? "passing" : "failing");
+			if(!(_settings.report_testcase_run || _settings.report_testcase_end || _settings.report_pass || _settings.report_fail))
+			{
+				clprintf(failing_ == 0 ? Color::Gray : Color::White, "-- ");
+				clprintf(Color::Blue, "%s:%d "
+					, test_.position().file
+					, test_.position().line);
+			}
+			clprintf(Color::Default, "\n");
+			fflush(stdout);
+		}
+	}
+
+	virtual void 
+	report_testcase_run(Test<C> & test_, Testcase<C> & testcase_, int depth_ = 0) noexcept override
+	{
+		if(_settings.report_testcase_run)
+		{
+			clprintf(Color::Default, "\n");
+			_indent(depth_ * 2 + 1);
+			clprintf(Color::Magenta, "%s: ", testcase_.name());
+			fflush(stdout);
+		}
+	}
+	
+
+	virtual void 
+	report_testcase_end(Test<C> & test_, Testcase<C> & testcase_, int passing_, int failing_, int depth_ = 0) noexcept override
+	{
+		if(_settings.report_testcase_end)
+		{
+			if((passing_ != 0 && _settings.report_pass) || (failing_ != 0 && _settings.report_fail))
+			{
+				clprintf(Color::Default, "\n");
+				_indent(depth_ * 2 + 1);
+			}
+			clprintf(failing_ == 0 ? Color::Green : Color::Red, "( %s ) "
+				, failing_ == 0 ? "Pass" : "Fail");
+			if(!(_settings.report_pass || _settings.report_fail))
+			{
+				clprintf(failing_ == 0 ? Color::Gray : Color::White, "-- ");
+				clprintf(Color::Blue, "%s:%d "
+					, testcase_.position().file
+					, testcase_.position().line);
+			}
+			fflush(stdout);
+		}
+	}
+
+	virtual void 
+	report_pass(Test<C> & test_, Testcase<C> & testcase_, Assertion const & assertion, int depth_ = 0) noexcept override
+	{
+		if(_settings.report_pass)
+			_report_assertion(assertion, depth_);
+	}
+
+	virtual void 
+	report_fail(Test<C> & test_, Testcase<C> & testcase_, Assertion const & assertion, int depth_ = 0) noexcept override
+	{
+		if(_settings.report_fail)
+			_report_assertion(assertion, depth_);
+	}
+
+	virtual void 
+	report_unhandled_exception(Test<C> & test_, Testcase<C> & testcase_, int depth_ = 0) noexcept override
+	{
+		if(_settings.report_unhandled_exception)
+		{
+			clprintf(Color::Default, "\n");
+			_indent(depth_ * 2 + 2);
+			clprintf(Color::Yellow, "| Halt | ");
+			clprintf(Color::Yellow, "unhandled exception");
+			clprintf(Color::Default, " -- ");
+			clprintf(Color::Blue, "%s:%d", testcase_.position().file, testcase_.position().line);
+			fflush(stdout);
+		}
+	}
+
+};
+
+template <class C>
+using colored_printer = ColoredPrinter<C>;
+
+} // namespace pptest
+
+#endif // PPTEST_COLORED_PRINTER
