@@ -89,6 +89,8 @@
 
 namespace pptest {
 
+static constexpr struct Version { uint16_t major = 1, minor = 5, patch = 27; } version {};
+
 using cstring_t = char const *;
 
 template <class C> class Test;
