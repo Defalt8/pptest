@@ -3,6 +3,8 @@ project( pptest VERSION 1.5.27 )
 
 add_library( pptest INTERFACE )
 target_include_directories( pptest INTERFACE include )
+set_target_properties( pptest PROPERTIES PUBLIC_HEADER "include/pptest;include/colored_printer" )
+install( TARGETS pptest PUBLIC_HEADER DESTINATION include COMPONENT Development )
 
 if( ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR} )
 	add_executable( pptest_example example.cpp )
