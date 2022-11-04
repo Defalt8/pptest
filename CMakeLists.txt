@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.4 )
-project( pptest VERSION 1.5.27 )
+project( pptest VERSION 1.6.30 )
 
 add_library( pptest INTERFACE )
 target_include_directories( pptest INTERFACE include )

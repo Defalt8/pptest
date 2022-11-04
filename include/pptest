@@ -2,13 +2,13 @@
  * @file pptest
  * @author Natnael (the.defalt8@gmail.com)
  * @brief Unit-Testing library
- * @version 0.1
+ * @version 1.6.30
  * @date 2022-11-01
  * 
  * @copyright Copyright (c) 2022 MIT License
  * 
  * 
- *  Snake-case aliases are provided.
+ *  snake_case aliases are provided for classes and typedefs.
  * 
  * - Test<C>     -- Base class for all tests.
  * - Testcase<C> -- Base class for all testcases.
@@ -25,57 +25,52 @@
  * - Test definition macros with brief example.
  *   NOTE: You can run tests inside tests. 
  * 
- *     Begin_Test(TestID)
+ *     Test(TestID)
+ *     {
+ *       Prerun(TestcaseID) {}
+ *       Postrun(TestcaseID) {}
  * 
- *       Pre_Run(TestID) {}
- *       Post_Run(TestID) {}
- * 
- *       Pre_Testcase_Run(TestID) {}
- *       Post_Testcase_Run(TestID) {}
- * 
- *       Begin_Testcase(TestID,TestcaseID)
+ *       Testcase(TestID,TestcaseID)
  *       {
- *       }
- *       End_Testcase(TestID,TestcaseID)
+ *       } TestcaseEnd(TestID,TestcaseID);
  * 
- *       Begin_Testcase_Registration(TestID)
+ *       Registry(TestID)
  *       {
- *           Register_Testcase(TestID, TestcaseID)
- *       }
- *       End_Testcase_Registration(TestID)
+ *           Register(TestID, TestcaseID)
+ *       };
  * 
- *     End_Test(TestID)
+ *     } TestEnd(TestID);
  * 
- *  - Assertion macros -- asserts break/return on failure while checks do not.
+ *  - Assertion macros -- Asserts break/return on failure while Expects do not.
  * 
- *    - Assert_True
- *    - Assert_False
- *    - Assert_Null
- *    - Assert_NotNull
- *    - Assert_EQ     -- equal
- *    - Assert_NEQ    -- not equal
- *    - Assert_GT     -- greater than
- *    - Assert_LT     -- less than
- *    - Assert_GE     -- greater than or equal to
- *    - Assert_LE     -- less than or equal to
- *    - Check_True
- *    - Check_False
- *    - Check_Null
- *    - Check_NotNull
- *    - Check_EQ      -- equal
- *    - Check_NEQ     -- not equal
- *    - Check_GT      -- greater than
- *    - Check_LT      -- less than
- *    - Check_GE      -- greater than or equal to
- *    - Check_LE      -- less than or equal to
- *    - Assert_Throw      -- must throw the type specified
- *    - Assert_NoThrow    -- must not throw the type specified
- *    - Check_Throw       -- must throw the type specified
- *    - Check_NoThrow     -- must not throw the type specified
- *    - Assert_ThrowAny   -- must throw any exceptions
- *    - Assert_ThrowNone  -- must not throw any exceptions
- *    - Check_ThrowAny    -- must throw any exceptions
- *    - Check_ThrowNone   -- must not throw any exceptions 
+ *    - AssertTrue      | ASSERT_True        -- must be true
+ *    - AssertFalse     | ASSERT_False       -- must be false
+ *    - AssertNull      | ASSERT_Null        -- must be null
+ *    - AssertNotNull   | ASSERT_NotNull     -- must not be null
+ *    - AssertEQ        | ASSERT_EQ          -- must be equal
+ *    - AssertNEQ       | ASSERT_NEQ         -- must not be equal
+ *    - AssertGT        | ASSERT_GT          -- must be greater than
+ *    - AssertLT        | ASSERT_LT          -- must be less than
+ *    - AssertGE        | ASSERT_GE          -- must be greater than or equal to
+ *    - AssertLE        | ASSERT_LE          -- must be less than or equal to
+ *    - AssertThrow     | ASSERT_Throw       -- must throw the exception specified
+ *    - AssertNoThrow   | ASSERT_NoThrow     -- must not throw the exception specified
+ *    - AssertThrowAny  | ASSERT_ThrowAny    -- must throw any exceptions
+ *    - AssertThrowNone | ASSERT_ThrowNone   -- must not throw any exceptions
+ *    - ExpectTrue      | EXPECT_True        -- expect true
+ *    - ExpectFalse     | EXPECT_False       -- expect false
+ *    - ExpectNull      | EXPECT_Null        -- expect null
+ *    - ExpectNotNull   | EXPECT_NotNull     -- expect not null
+ *    - ExpectEQ        | EXPECT_EQ          -- expect equal
+ *    - ExpectNEQ       | EXPECT_NEQ         -- expect not equal
+ *    - ExpectGT        | EXPECT_GT          -- expect greater than
+ *    - ExpectLT        | EXPECT_LT          -- expect less than
+ *    - ExpectGE        | EXPECT_GE          -- expect greater than or equal to
+ *    - ExpectLE        | EXPECT_LE          -- expect less than or equal to
+ *    - ExpectThrow     | EXPECT_Throw       -- expected to throw the exception specified
+ *    - ExpectNoThrow   | EXPECT_NoThrow     -- expected not to throw the exception specified
+ *    - ExpectThrowAny  | EXPECT_ThrowAny    -- expected to throw any exceptions
+ *    - ExpectThrowNone | EXPECT_ThrowNone   -- expected not to throw any exceptions 
  * 
  */
 
@@ -89,7 +84,7 @@
 
 namespace pptest {
 
-static constexpr struct Version { uint16_t major = 1, minor = 5, patch = 27; } version {};
+static constexpr struct Version { uint16_t major = 1, minor = 6, patch = 30; } version {};
 
 using cstring_t = char const *;
 
@@ -106,7 +101,7 @@ enum class Status
 static constexpr cstring_t 
 cstr_status[]
 {
-	"Unknown",
+	"Unkn",
 	"Pass",
 	"Fail"
 };
@@ -205,11 +200,9 @@ class Test
 
  public:
 	virtual ~Test() = default;
-	 
-	virtual void pre_run()  {}
-	virtual void post_run(int passing_, int failing_) noexcept {}
-	virtual void pre_testcase_run(pptest::Testcase<C> & testcase_)  {}
-	virtual void post_testcase_run(pptest::Testcase<C> & testcase_, int passing_, int failing_) noexcept {}
+	
+	virtual void prerun(pptest::Testcase<C> & testcase_)  {}
+	virtual void postrun(pptest::Testcase<C> & testcase_, int passing_, int failing_) noexcept {}
 
 	template <template <typename...> class R,
 		typename = decltype(static_cast<Reporter<C> *>((R<C> *)nullptr))> 
@@ -235,7 +228,6 @@ class Test
 		int total_failing_ = 0;
 		int total_passing_assertions_ = 0;
 		int total_failing_assertions_ = 0;
-		test_.pre_run();
 		reporter_.report_test_run(test_, depth_);
 		for(auto & testcase_ptr : testcases_)
 		{
@@ -245,7 +237,7 @@ class Test
 			reporter_.report_testcase_run(test_, testcase, depth_);
 			try 
 			{
-				pre_testcase_run(testcase);
+				prerun(testcase);
 				testcase.run(reporter_, passing_, failing_, depth_);
 			}
 			catch(Assertion const & ex)
@@ -255,7 +247,7 @@ class Test
 				++failing_;
 				reporter_.report_unhandled_exception(test_, testcase, depth_);
 			}
-			post_testcase_run(testcase, passing_, failing_);
+			postrun(testcase, passing_, failing_);
 			reporter_.report_testcase_end(test_, testcase, passing_, failing_, depth_);
 			if(failing_ > 0)
 				++total_failing_;
@@ -265,7 +257,6 @@ class Test
 			total_failing_assertions_ += failing_;
 		}
 		reporter_.report_test_end(test_, total_passing_, total_failing_, depth_);
-		test_.post_run(total_passing_, total_failing_);
 		if(summary_out_)
 			*summary_out_ = { total_passing_, total_failing_, total_passing_assertions_, total_failing_assertions_ };
 		return total_failing_;
@@ -289,8 +280,8 @@ class Testcase
  protected:
 	Testcase(Position const & position_, C * test_, cstring_t name_)
 		: _position { position_ }
-		, _test { test_ }
-		, _name { name_ }
+		, _test     { test_ }
+		, _name     { name_ }
 	{}
 	
 	void 
@@ -473,14 +464,14 @@ template <class C> using testcase  = Testcase<C>;
 
 
 #define PPTEST_ASSERT_IMPL(Command_, Breaking_, Pass_, ...) \
-		_pptest_this_._on_assert(Pass_, _reporter_, _passing_, _failing_, \
+		_testcase_._on_assert(Pass_, _reporter_, _passing_, _failing_, \
 			pptest::Assertion { Command_,#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking_ }, _depth_)
 
 #define PPTEST_ASSERT_THROW_IMPL(Command_, Breaking_, ExpectThrow_, Exception_, ...) \
 	{ \
 		bool caught_ = false;\
 		try { __VA_ARGS__; } catch(Exception_) { caught_ = true; } catch(...) { caught_ = false; } \
-		_pptest_this_._on_assert((ExpectThrow_ == caught_), _reporter_, _passing_, _failing_, \
+		_testcase_._on_assert((ExpectThrow_ == caught_), _reporter_, _passing_, _failing_, \
 			pptest::Assertion { Command_,#Exception_", "#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking_ }, _depth_); \
 	}
 
@@ -488,124 +479,124 @@ template <class C> using testcase  = Testcase<C>;
 	{ \
 		bool caught_ = false;\
 		try { __VA_ARGS__; } catch(...) { caught_ = true; } \
-		_pptest_this_._on_assert((ExpectThrow_ == caught_), _reporter_, _passing_, _failing_, \
+		_testcase_._on_assert((ExpectThrow_ == caught_), _reporter_, _passing_, _failing_, \
 			pptest::Assertion { Command_,#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking_ }, _depth_); \
 	}
 
 
-#define Assert_True(...)    PPTEST_ASSERT_IMPL("Assert_True",true,bool(__VA_ARGS__),__VA_ARGS__)
-#define Assert_False(...)   PPTEST_ASSERT_IMPL("Assert_False",true,!bool(__VA_ARGS__),__VA_ARGS__)
-#define Assert_Null(...)    PPTEST_ASSERT_IMPL("Assert_Null",true,!bool(__VA_ARGS__),__VA_ARGS__)
-#define Assert_NotNull(...) PPTEST_ASSERT_IMPL("Assert_NotNull",true,bool(__VA_ARGS__),__VA_ARGS__)
-#define Assert_EQ(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_EQ",true,((LHS) == (RHS)),LHS == RHS)
-#define Assert_NEQ(LHS,RHS) PPTEST_ASSERT_IMPL("Assert_NEQ",true,((LHS) != (RHS)),LHS != RHS)
-#define Assert_GT(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_GT",true,((LHS) > (RHS)),LHS > RHS)
-#define Assert_LT(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_LT",true,((LHS) < (RHS)),LHS < RHS)
-#define Assert_GE(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_GE",true,((LHS) >= (RHS)),LHS >= RHS)
-#define Assert_LE(LHS,RHS)  PPTEST_ASSERT_IMPL("Assert_LE",true,((LHS) <= (RHS)),LHS <= RHS)
+#define AssertTrue(...)    PPTEST_ASSERT_IMPL("Assert",true,(__VA_ARGS__ == true),__VA_ARGS__ == true)
+#define AssertFalse(...)   PPTEST_ASSERT_IMPL("Assert",true,(__VA_ARGS__ == false),__VA_ARGS__ == false)
+#define AssertNull(...)    PPTEST_ASSERT_IMPL("Assert",true,!(__VA_ARGS__),!(__VA_ARGS__))
+#define AssertNotNull(...) PPTEST_ASSERT_IMPL("Assert",true,bool(__VA_ARGS__),bool(__VA_ARGS__))
+#define AssertEQ(LHS,...)  PPTEST_ASSERT_IMPL("Assert",true,((LHS) == (__VA_ARGS__)),LHS == __VA_ARGS__)
+#define AssertNEQ(LHS,...) PPTEST_ASSERT_IMPL("Assert",true,((LHS) != (__VA_ARGS__)),LHS != __VA_ARGS__)
+#define AssertGT(LHS,...)  PPTEST_ASSERT_IMPL("Assert",true,((LHS) > (__VA_ARGS__)),LHS > __VA_ARGS__)
+#define AssertLT(LHS,...)  PPTEST_ASSERT_IMPL("Assert",true,((LHS) < (__VA_ARGS__)),LHS < __VA_ARGS__)
+#define AssertGE(LHS,...)  PPTEST_ASSERT_IMPL("Assert",true,((LHS) >= (__VA_ARGS__)),LHS >= __VA_ARGS__)
+#define AssertLE(LHS,...)  PPTEST_ASSERT_IMPL("Assert",true,((LHS) <= (__VA_ARGS__)),LHS <= __VA_ARGS__)
+#define AssertThrow(Exception,...)    PPTEST_ASSERT_THROW_IMPL("Assert_Throw",true,true,Exception,__VA_ARGS__)
+#define AssertNoThrow(Exception,...)  PPTEST_ASSERT_THROW_IMPL("Assert_No_Throw",true,false,Exception,__VA_ARGS__)
+#define AssertThrowAny(...)           PPTEST_ASSERT_THROW_ANY_IMPL("Assert_Throw_Any",true,true,__VA_ARGS__)
+#define AssertThrowNone(...)          PPTEST_ASSERT_THROW_ANY_IMPL("Assert_Throw_None",true,false,__VA_ARGS__)
 
-#define Check_True(...)     PPTEST_ASSERT_IMPL("Check_True",false,bool(__VA_ARGS__),__VA_ARGS__)
-#define Check_False(...)    PPTEST_ASSERT_IMPL("Check_False",false,!bool(__VA_ARGS__),__VA_ARGS__)
-#define Check_Null(...)     PPTEST_ASSERT_IMPL("Check_Null",false,!bool(__VA_ARGS__),__VA_ARGS__)
-#define Check_NotNull(...)  PPTEST_ASSERT_IMPL("Check_NotNull",false,bool(__VA_ARGS__),__VA_ARGS__)
-#define Check_EQ(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_EQ",false,((LHS) == (RHS)),LHS == RHS)
-#define Check_NEQ(LHS,RHS)  PPTEST_ASSERT_IMPL("Check_NEQ",false,((LHS) != (RHS)),LHS != RHS)
-#define Check_GT(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_GT",false,((LHS) > (RHS)),LHS > RHS)
-#define Check_LT(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_LT",false,((LHS) < (RHS)),LHS < RHS)
-#define Check_GE(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_GE",false,((LHS) >= (RHS)),LHS >= RHS)
-#define Check_LE(LHS,RHS)   PPTEST_ASSERT_IMPL("Check_LE",false,((LHS) <= (RHS)),LHS <= RHS)
+#define ExpectTrue(...)     PPTEST_ASSERT_IMPL("Expect",false,(__VA_ARGS__ == true),__VA_ARGS__ == true)
+#define ExpectFalse(...)    PPTEST_ASSERT_IMPL("Expect",false,(__VA_ARGS__ == false),__VA_ARGS__ == false)
+#define ExpectNull(...)     PPTEST_ASSERT_IMPL("Expect",false,!(__VA_ARGS__),!(__VA_ARGS__))
+#define ExpectNotNull(...)  PPTEST_ASSERT_IMPL("Expect",false,bool(__VA_ARGS__),bool(__VA_ARGS__))
+#define ExpectEQ(LHS,...)   PPTEST_ASSERT_IMPL("Expect",false,((LHS) == (__VA_ARGS__)),LHS == __VA_ARGS__)
+#define ExpectNEQ(LHS,...)  PPTEST_ASSERT_IMPL("Expect",false,((LHS) != (__VA_ARGS__)),LHS != __VA_ARGS__)
+#define ExpectGT(LHS,...)   PPTEST_ASSERT_IMPL("Expect",false,((LHS) > (__VA_ARGS__)),LHS > __VA_ARGS__)
+#define ExpectLT(LHS,...)   PPTEST_ASSERT_IMPL("Expect",false,((LHS) < (__VA_ARGS__)),LHS < __VA_ARGS__)
+#define ExpectGE(LHS,...)   PPTEST_ASSERT_IMPL("Expect",false,((LHS) >= (__VA_ARGS__)),LHS >= __VA_ARGS__)
+#define ExpectLE(LHS,...)   PPTEST_ASSERT_IMPL("Expect",false,((LHS) <= (__VA_ARGS__)),LHS <= __VA_ARGS__)
+#define ExpectThrow(Exception,...)    PPTEST_ASSERT_THROW_IMPL("Expect_Throw",false,true,Exception,__VA_ARGS__)
+#define ExpectNoThrow(Exception,...)  PPTEST_ASSERT_THROW_IMPL("Expect_No_Throw",false,false,Exception,__VA_ARGS__)
+#define ExpectThrowAny(...)           PPTEST_ASSERT_THROW_ANY_IMPL("Expect_Throw_Any",false,true,__VA_ARGS__)
+#define ExpectThrowNone(...)          PPTEST_ASSERT_THROW_ANY_IMPL("Expect_Throw_None",false,false,__VA_ARGS__)
 
-#define Assert_Throw(Exception,...)    PPTEST_ASSERT_THROW_IMPL("Assert_Throw",true,true,Exception,__VA_ARGS__)
-#define Assert_NoThrow(Exception,...)  PPTEST_ASSERT_THROW_IMPL("Assert_NoThrow",true,false,Exception,__VA_ARGS__)
+#define ASSERT_True(...)               AssertTrue(__VA_ARGS__)
+#define ASSERT_False(...)              AssertFalse(__VA_ARGS__)
+#define ASSERT_Null(...)               AssertNull(__VA_ARGS__)
+#define ASSERT_NotNull(...)            AssertNotNull(__VA_ARGS__)
+#define ASSERT_EQ(LHS,...)             AssertEQ(LHS,__VA_ARGS__)
+#define ASSERT_NEQ(LHS,...)            AssertNEQ(LHS,__VA_ARGS__)
+#define ASSERT_GT(LHS,...)             AssertGT(LHS,__VA_ARGS__)
+#define ASSERT_LT(LHS,...)             AssertLT(LHS,__VA_ARGS__)
+#define ASSERT_GE(LHS,...)             AssertGE(LHS,__VA_ARGS__)
+#define ASSERT_LE(LHS,...)             AssertLE(LHS,__VA_ARGS__)
+#define ASSERT_Throw(Exception,...)    AssertThrow(Exception,__VA_ARGS__)
+#define ASSERT_NoThrow(Exception,...)  AssertNoThrow(Exception,__VA_ARGS__)
+#define ASSERT_ThrowAny(...)           AssertThrowAny(__VA_ARGS__)
+#define ASSERT_ThrowNone(...)          AssertThrowNone(__VA_ARGS__)
 
-#define Check_Throw(Exception,...)    PPTEST_ASSERT_THROW_IMPL("Check_Throw",false,true,Exception,__VA_ARGS__)
-#define Check_NoThrow(Exception,...)  PPTEST_ASSERT_THROW_IMPL("Check_NoThrow",false,false,Exception,__VA_ARGS__)
+#define EXPECT_True(...)               ExpectTrue(__VA_ARGS__)
+#define EXPECT_False(...)              ExpectFalse(__VA_ARGS__)
+#define EXPECT_Null(...)               ExpectNull(__VA_ARGS__)
+#define EXPECT_NotNull(...)            ExpectNotNull(__VA_ARGS__)
+#define EXPECT_EQ(LHS,...)             ExpectEQ(LHS,__VA_ARGS__)
+#define EXPECT_NEQ(LHS,...)            ExpectNEQ(LHS,__VA_ARGS__)
+#define EXPECT_GT(LHS,...)             ExpectGT(LHS,__VA_ARGS__)
+#define EXPECT_LT(LHS,...)             ExpectLT(LHS,__VA_ARGS__)
+#define EXPECT_GE(LHS,...)             ExpectGE(LHS,__VA_ARGS__)
+#define EXPECT_LE(LHS,...)             ExpectLE(LHS,__VA_ARGS__)
+#define EXPECT_Throw(Exception,...)    ExpectThrow(Exception,__VA_ARGS__)
+#define EXPECT_NoThrow(Exception,...)  ExpectNoThrow(Exception,__VA_ARGS__)
+#define EXPECT_ThrowAny(...)           ExpectThrowAny(__VA_ARGS__)
+#define EXPECT_ThrowNone(...)          ExpectThrowNone(__VA_ARGS__)
 
-#define Assert_ThrowAny(...)    PPTEST_ASSERT_THROW_ANY_IMPL("Assert_ThrowAny",true,true,__VA_ARGS__)
-#define Assert_ThrowNone(...)   PPTEST_ASSERT_THROW_ANY_IMPL("Assert_ThrowNone",true,false,__VA_ARGS__)
+#define TESTCASE_ID(...) _##__VA_ARGS__
+#define TESTCASE_PTR_ID(...) _tcptr_##__VA_ARGS__
 
-#define Check_ThrowAny(...)    PPTEST_ASSERT_THROW_ANY_IMPL("Check_ThrowAny",false,true,__VA_ARGS__)
-#define Check_ThrowNone(...)   PPTEST_ASSERT_THROW_ANY_IMPL("Check_ThrowNone",false,false,__VA_ARGS__)
+// Test
+#define Test(TestID) \
+	class TestID : public pptest::Test<TestID>
 
-#define TESTCASE_ID(...) _pptest_tc_##__VA_ARGS__
-#define TESTCASE_PTR_ID(...) _pptest_tcptr_##__VA_ARGS__
+// PreRun -- called before each run testcase
+#define PreRun(TestID) \
+	void prerun(pptest::Testcase<TestID> & _testcase_) override
 
+// PostRun -- called after each run testcase
+#define PostRun(TestID) \
+	void postrun(pptest::Testcase<TestID> & _testcase_, int _passing_, int _failing_) noexcept override
 
-// Begin_Test
-#define Begin_Test(TestID) \
-	class TestID : public pptest::Test<TestID> \
-	{ \
-		friend class pptest::Test<TestID>; \
-		friend class pptest::Testcase<TestID>; \
-	 public: \
-		TestID() \
-			: pptest::Test<TestID> { { __FILE__, __LINE__ }, *this, #TestID } \
-		{}
-
-
-// Pre_Run
-#define Pre_Run(TestID) \
-	void pre_run() override
-
-
-// Post_Run
-#define Post_Run(TestID) \
-	void post_run(int _passing_, int _failing_) noexcept override
-
-
-// Pre_Testcase_Run
-#define Pre_Testcase_Run(TestID) \
-	void pre_testcase_run(pptest::Testcase<TestID> & _testcase_) override
-
-
-// Post_Testcase_Run
-#define Post_Testcase_Run(TestID) \
-	void post_testcase_run(pptest::Testcase<TestID> & _testcase_, int _passing_, int _failing_) noexcept override
-
-
-// Begin_Testcase
-#define Begin_Testcase(TestID,TestcaseID) \
+// Testcase
+#define Testcase(TestID,TestcaseID) \
 	 public: \
 		class TestcaseID : public pptest::Testcase<TestID> \
 		{ \
-			TestcaseID & _pptest_this_ = *this;\
+			TestcaseID & _testcase_ = *this;\
 		 public: \
 			TestcaseID(TestID & test_) \
 				: Testcase<TestID> { { __FILE__, __LINE__ }, &test_, #TestcaseID } \
 			{} \
 			void run(pptest::Reporter<TestID> & _reporter_, int & _passing_, int & _failing_, int _depth_ = 0) override 
 
-
-// End_Testcase
-#define End_Testcase(TestID,TestcaseID) \
+// TestcaseEnd
+#define TestcaseEnd(TestID,TestcaseID) \
 		} TESTCASE_ID(TestcaseID) { *this }; \
 	 private: \
 		pptest::Testcase<TestID> * const TESTCASE_PTR_ID(TestcaseID) = &TESTCASE_ID(TestcaseID); \
 	 public:
 
-
-// Begin_Testcase_Registration
-#define Begin_Testcase_Registration(TestID) \
+// Registry of testcases. Use Register(TestID,TestcaseID) inside
+#define Registry(TestID) \
+		friend class pptest::Test<TestID>; \
+	 public: \
+		TestID() \
+			: pptest::Test<TestID> { { __FILE__, __LINE__ }, *this, #TestID } \
+		{} \
 	 private: \
 		static constexpr thread_local pptest::Testcase<TestID> * const TestID::* \
 		_pptest_testcase_mptrs[] \
 
-
-// Register_Testcase
-#define Register_Testcase(TestID, TestcaseID) \
+// Register testcase
+#define Register(TestID, TestcaseID) \
 			&TestID::TESTCASE_PTR_ID(TestcaseID),
 
-
-// End_Testcase_Registration
-#define End_Testcase_Registration(TestID) \
-		;
-
-
-// End_Test
-#define End_Test(TestID) \
-	};\
+// TestEnd
+#define TestEnd(TestID) \
+	; \
 	constexpr thread_local pptest::Testcase<TestID> * const TestID::* \
 		TestID::_pptest_testcase_mptrs[];
-
 
 #endif // PPTEST

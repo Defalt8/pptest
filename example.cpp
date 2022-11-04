@@ -1,56 +1,61 @@
 #include <pptest>
 #include <colored_printer>
 
-// Try to fix the function based on the failing tests
-
-static char to_hex_char(int hex_)
+char to_hex_char(int hex_)
 {
-	return (hex_ >= 0 && hex_ <= 9) 
-		? char('0' + hex_) 
-		: (hex_ >= 10 && hex_ <= 15 
-			? char('A' + (hex_ - 10)) 
-			: '\0');
+	if(hex_ >= 0 && hex_ <= 9)
+		return char('0' + hex_);
+	else if(hex_ >= 10 && hex_ <= 15)
+		return char('A' + (hex_ - 10));
+	else if(hex_ < 0)
+		throw hex_;
+	return '0';
 }
 
-Begin_Test(to_hex_char_test)
-
-	Begin_Testcase(to_hex_char_test, test_0_to_9)
+Test(to_hex_char_test)
+{
+	Testcase(to_hex_char_test, test_0_to_9)
 	{
 		for(int i = 0; i < 10; ++i)
-			Assert_EQ(to_hex_char(i), char('0' + i));
-	}
-	End_Testcase(to_hex_char_test, test_0_to_9)
+			AssertEQ(to_hex_char(i), char('0' + i));
+	} TestcaseEnd(to_hex_char_test, test_0_to_9);
 
-	Begin_Testcase(to_hex_char_test, test_A_to_F)
+	Testcase(to_hex_char_test, test_A_to_F)
 	{
 		for(int i = 0xA; i <= 0xF; ++i)
-			Assert_EQ(to_hex_char(i), char('A' + (i - 0xA)));
-	}
-	End_Testcase(to_hex_char_test, test_A_to_F)
+			AssertEQ(to_hex_char(i), char('A' + (i - 0xA)));
+	} TestcaseEnd(to_hex_char_test, test_A_to_F);
 
-	Begin_Testcase(to_hex_char_test, test_invalid_positive)
+	Testcase(to_hex_char_test, test_invalid_positive_ret_0)
 	{
 		for(int i = 0x10; i <= 0x12; ++i)
-			Assert_EQ(to_hex_char(i), '0');
-	}
-	End_Testcase(to_hex_char_test, test_invalid_positive)
+			AssertEQ(to_hex_char(i), '0');
+	} TestcaseEnd(to_hex_char_test, test_invalid_positive_ret_0);
 
-	Begin_Testcase(to_hex_char_test, test_invalid_negative)
+	Testcase(to_hex_char_test, test_invalid_negative_ret_0)
 	{
 		for(int i = -2; i < 0; ++i)
-			Assert_EQ(to_hex_char(i), '0');
-	}
-	End_Testcase(to_hex_char_test, test_invalid_negative)
+			AssertEQ(to_hex_char(i), '0');
+	} TestcaseEnd(to_hex_char_test, test_invalid_negative_ret_0);
 
-	Begin_Testcase_Registration(to_hex_char_test)
+	Testcase(to_hex_char_test, test_never_throw)
 	{
-		Register_Testcase(to_hex_char_test, test_0_to_9)
-		Register_Testcase(to_hex_char_test, test_A_to_F)
-		Register_Testcase(to_hex_char_test, test_invalid_positive)
-		Register_Testcase(to_hex_char_test, test_invalid_negative)
-	}
-	End_Testcase_Registration(to_hex_char_test)
-End_Test(to_hex_char_test)
+		ExpectThrowNone(to_hex_char(0));
+		ExpectThrowNone(to_hex_char(0xF));
+		ExpectThrowNone(to_hex_char(-1));
+		ExpectThrowNone(to_hex_char(0x10));
+	} TestcaseEnd(to_hex_char_test, test_never_throw);
+
+	Registry(to_hex_char_test)
+	{
+		Register(to_hex_char_test, test_0_to_9)
+		Register(to_hex_char_test, test_A_to_F)
+		Register(to_hex_char_test, test_invalid_positive_ret_0)
+		Register(to_hex_char_test, test_invalid_negative_ret_0)
+		Register(to_hex_char_test, test_never_throw)
+	};
+
+} TestEnd(to_hex_char_test);
 
 
 template <typename T> using reporter_t = pptest::colored_printer<T>;

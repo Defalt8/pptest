@@ -1,298 +1,304 @@
 #include <pptest>
 #include <colored_printer>
 
-Begin_Test(Passing_Assertions_Test)
-
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_True)
+Test(Passing_Assertions_Test)
+{
+	Testcase(Passing_Assertions_Test, test_AssertTrue_true)
 	{
-		Assert_True(true);
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_True)
+		ExpectTrue(true);
+		AssertTrue(true);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertTrue_true);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_False)
+	Testcase(Passing_Assertions_Test, test_AssertFalse_false)
 	{
-		Assert_False(false);
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_False)
+		ExpectFalse(false);
+		AssertFalse(false);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertFalse_false);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_Null)
+	Testcase(Passing_Assertions_Test, test_AssertNull_null)
 	{
-		int * ptr = nullptr;
-		Assert_Null(ptr);
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_Null)
+		ExpectNull(nullptr);
+		AssertNull(nullptr);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertNull_null);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_NotNull)
+	Testcase(Passing_Assertions_Test, test_AssertNotNull_valid)
 	{
-		int i  = 5;
-		Assert_NotNull(&i);
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_NotNull)
+		int valid = 5;
+		ExpectNotNull(&valid);
+		AssertNotNull(&valid);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertNotNull_valid);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_EQ)
+	Testcase(Passing_Assertions_Test, test_AssertEQ_equal)
 	{
-		int i = 2;
-		Assert_EQ(i, 2);
-		Assert_EQ(i, i);
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_EQ)
+		ExpectEQ(3, 3);
+		AssertEQ(3, 3);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertEQ_equal);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_NEQ)
+	Testcase(Passing_Assertions_Test, test_AssertNEQ_inequal)
 	{
-		int i = 3;
-		Assert_NEQ(i, 2);
-		Assert_NEQ(i, i+1);
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_NEQ)
+		ExpectNEQ(3, 2);
+		AssertNEQ(3, 2);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertNEQ_inequal);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_GT)
+	Testcase(Passing_Assertions_Test, test_AssertGT_greater)
 	{
-		int i = 3;
-		Assert_GT(i, 2);
-		Assert_GT(i, i-1);
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_GT)
+		ExpectGT(3, 2);
+		AssertGT(3, 2);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertGT_greater);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_LT)
+	Testcase(Passing_Assertions_Test, test_AssertLT_less)
 	{
-		int i = 3;
-		Assert_LT(i, 5);
-		Assert_LT(i, i+1);
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_LT)
+		ExpectLT(3, 5);
+		AssertLT(3, 5);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertLT_less);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_GE)
+	Testcase(Passing_Assertions_Test, test_AssertGE_equal)
 	{
-		int i = 3;
-		Assert_GE(i, 2);
-		Assert_GE(i, i-1);
-		Assert_GE(i, i);
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_GE)
+		ExpectGE(3, 3);
+		AssertGE(3, 3);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertGE_equal);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_LE)
+	Testcase(Passing_Assertions_Test, test_AssertGE_greater)
 	{
-		int i = 3;
-		Assert_LE(i, 5);
-		Assert_LE(i, i+1);
-		Assert_LE(i, i);
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_LE)
+		ExpectGE(3, 2);
+		AssertGE(3, 2);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertGE_greater);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_Throw)
+	Testcase(Passing_Assertions_Test, test_AssertLE_equal)
 	{
-		Assert_Throw(int, throw 5);
-		Assert_Throw(char const *, throw "oops");
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_Throw)
+		ExpectLE(3, 3);
+		AssertLE(3, 3);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertLE_equal);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_NoThrow)
+	Testcase(Passing_Assertions_Test, test_AssertLE_less)
 	{
-		Assert_NoThrow(int);
-		Assert_NoThrow(int, throw "oops");
-		Assert_NoThrow(char const *, throw 5);
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_NoThrow)
+		ExpectLE(2, 3);
+		AssertLE(2, 3);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertLE_less);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_ThrowAny)
+	Testcase(Passing_Assertions_Test, test_AssertThrow_expected)
 	{
-		Assert_ThrowAny(throw 5);
-		Assert_ThrowAny(throw "oops");
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_ThrowAny)
+		ExpectThrow(int, throw 5);
+		ExpectThrow(char const *, throw "oops");
+		AssertThrow(int, throw 5);
+		AssertThrow(char const *, throw "oops");
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertThrow_expected);
 
-	Begin_Testcase(Passing_Assertions_Test, test_Assert_ThrowNone)
+	Testcase(Passing_Assertions_Test, test_AssertNoThrow_nothrow)
 	{
-		Assert_ThrowNone();
-	}
-	End_Testcase(Passing_Assertions_Test, test_Assert_ThrowNone)
+		ExpectNoThrow(int);
+		AssertNoThrow(int);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertNoThrow_nothrow);
 
-	Begin_Testcase_Registration(Passing_Assertions_Test)
+	Testcase(Passing_Assertions_Test, test_AssertNoThrow_throw_unexpected)
 	{
-		Register_Testcase(Passing_Assertions_Test, test_Assert_True)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_False)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_Null)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_NotNull)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_EQ)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_NEQ)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_GT)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_LT)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_GE)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_LE)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_Throw)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_NoThrow)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_ThrowAny)
-		Register_Testcase(Passing_Assertions_Test, test_Assert_ThrowNone)
-	}
-	End_Testcase_Registration(Passing_Assertions_Test)
-End_Test(Passing_Assertions_Test)
+		ExpectNoThrow(int, throw "oops");
+		ExpectNoThrow(char const *, throw 5);
+		AssertNoThrow(int, throw "oops");
+		AssertNoThrow(char const *, throw 5);
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertNoThrow_throw_unexpected);
 
-
-Begin_Test(Failing_Assertions_Test)
-
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_True)
+	Testcase(Passing_Assertions_Test, test_AssertThrowAny_throw)
 	{
-		Assert_True(false);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_True)
+		ExpectThrowAny(throw 5);
+		ExpectThrowAny(throw "oops");
+		AssertThrowAny(throw 5);
+		AssertThrowAny(throw "oops");
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertThrowAny_throw);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_False)
+	Testcase(Passing_Assertions_Test, test_AssertThrowNone_nothrow)
 	{
-		Assert_False(true);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_False)
+		ExpectThrowNone();
+		AssertThrowNone();
+	} TestcaseEnd(Passing_Assertions_Test, test_AssertThrowNone_nothrow);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_Null)
+	Registry(Passing_Assertions_Test)
 	{
-		int i  = 5;
-		Assert_Null(&i);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_Null)
+		Register(Passing_Assertions_Test, test_AssertTrue_true)
+		Register(Passing_Assertions_Test, test_AssertFalse_false)
+		Register(Passing_Assertions_Test, test_AssertNull_null)
+		Register(Passing_Assertions_Test, test_AssertNotNull_valid)
+		Register(Passing_Assertions_Test, test_AssertEQ_equal)
+		Register(Passing_Assertions_Test, test_AssertNEQ_inequal)
+		Register(Passing_Assertions_Test, test_AssertGT_greater)
+		Register(Passing_Assertions_Test, test_AssertLT_less)
+		Register(Passing_Assertions_Test, test_AssertGE_equal)
+		Register(Passing_Assertions_Test, test_AssertGE_greater)
+		Register(Passing_Assertions_Test, test_AssertLE_equal)
+		Register(Passing_Assertions_Test, test_AssertLE_less)
+		Register(Passing_Assertions_Test, test_AssertThrow_expected)
+		Register(Passing_Assertions_Test, test_AssertNoThrow_nothrow)
+		Register(Passing_Assertions_Test, test_AssertNoThrow_throw_unexpected)
+		Register(Passing_Assertions_Test, test_AssertThrowAny_throw)
+		Register(Passing_Assertions_Test, test_AssertThrowNone_nothrow)
+	};
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_NotNull)
+} TestEnd(Passing_Assertions_Test);
+
+
+Test(Failing_Assertions_Test)
+{
+	Testcase(Failing_Assertions_Test, test_AssertTrue_false)
 	{
-		int * ptr = nullptr;
-		Assert_NotNull(ptr);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_NotNull)
+		ExpectTrue(false);
+		AssertTrue(false);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertTrue_false);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_EQ)
+	Testcase(Failing_Assertions_Test, test_AssertFalse_true)
 	{
-		int i = 2;
-		Assert_EQ(i, 3);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_EQ)
+		ExpectFalse(true);
+		AssertFalse(true);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertFalse_true);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_NEQ)
+	Testcase(Failing_Assertions_Test, test_AssertNull_valid)
 	{
-		int i = 3;
-		Assert_NEQ(i, 3);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_NEQ)
+		int valid  = 5;
+		ExpectNull(&valid);
+		AssertNull(&valid);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertNull_valid);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_GT)
+	Testcase(Failing_Assertions_Test, test_AssertNotNull_null)
 	{
-		int i = 3;
-		Assert_GT(i, 3);
-		Assert_GT(i, i+1);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_GT)
+		ExpectNotNull(nullptr);
+		AssertNotNull(nullptr);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertNotNull_null);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_LT)
+	Testcase(Failing_Assertions_Test, test_AssertEQ_inequal)
 	{
-		int i = 3;
-		Assert_LT(i, 3);
-		Assert_LT(i, i-1);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_LT)
+		ExpectEQ(2, 3);
+		AssertEQ(2, 3);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertEQ_inequal);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_GE)
+	Testcase(Failing_Assertions_Test, test_AssertNEQ_equal)
 	{
-		int i = 3;
-		Assert_GE(i, 4);
-		Assert_GE(i, i+1);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_GE)
+		ExpectNEQ(3, 3);
+		AssertNEQ(3, 3);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertNEQ_equal);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_LE)
+	Testcase(Failing_Assertions_Test, test_AssertGT_equal)
 	{
-		int i = 3;
-		Assert_LE(i, 2);
-		Assert_LE(i, i-1);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_LE)
+		ExpectGT(3, 3);
+		AssertGT(3, 3);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertGT_equal);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_Throw)
+	Testcase(Failing_Assertions_Test, test_AssertGT_less)
 	{
-		Assert_Throw(char const *, throw 5);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_Throw)
+		ExpectGT(3, 3+1);
+		AssertGT(3, 3+1);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertGT_less);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_Throw_empty)
+	Testcase(Failing_Assertions_Test, test_AssertLT_equal)
 	{
-		Assert_Throw(int);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_Throw_empty)
+		ExpectLT(3, 3);
+		AssertLT(3, 3);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertLT_equal);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_NoThrow)
+	Testcase(Failing_Assertions_Test, test_AssertLT_greater)
 	{
-		Assert_NoThrow(int, throw 5);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_NoThrow)
+		ExpectLT(4, 3);
+		AssertLT(4, 3);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertLT_greater);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_ThrowAny)
+	Testcase(Failing_Assertions_Test, test_AssertGE_less)
 	{
-		Assert_ThrowAny();
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_ThrowAny)
+		ExpectGE(3, 4);
+		AssertGE(3, 4);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertGE_less);
 
-	Begin_Testcase(Failing_Assertions_Test, test_Assert_ThrowNone)
+	Testcase(Failing_Assertions_Test, test_AssertLE_greater)
 	{
-		Assert_ThrowNone(throw 5);
-	}
-	End_Testcase(Failing_Assertions_Test, test_Assert_ThrowNone)
+		ExpectLE(3, 2);
+		AssertLE(3, 2);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertLE_greater);
 
-	Begin_Testcase(Failing_Assertions_Test, test_unhandled_exception)
+	Testcase(Failing_Assertions_Test, test_AssertThrow_throw_unexpected)
+	{
+		ExpectThrow(char const *, throw 5);
+		AssertThrow(char const *, throw 5);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertThrow_throw_unexpected);
+
+	Testcase(Failing_Assertions_Test, test_AssertThrow_nothrow)
+	{
+		AssertThrow(int);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertThrow_nothrow);
+
+	Testcase(Failing_Assertions_Test, test_AssertNoThrow_throw_expected)
+	{
+		ExpectNoThrow(int, throw 5);
+		AssertNoThrow(int, throw 5);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertNoThrow_throw_expected);
+
+	Testcase(Failing_Assertions_Test, test_AssertThrowAny_nothrow)
+	{
+		ExpectThrowAny();
+		AssertThrowAny();
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertThrowAny_nothrow);
+
+	Testcase(Failing_Assertions_Test, test_AssertThrowNone_throw)
+	{
+		ExpectThrowNone(throw 5);
+		AssertThrowNone(throw 5);
+	} TestcaseEnd(Failing_Assertions_Test, test_AssertThrowNone_throw);
+
+	Testcase(Failing_Assertions_Test, test_unhandled_exception_throw)
 	{
 		throw 5;
-	}
-	End_Testcase(Failing_Assertions_Test, test_unhandled_exception)
+	} TestcaseEnd(Failing_Assertions_Test, test_unhandled_exception_throw);
 
-	Begin_Testcase_Registration(Failing_Assertions_Test)
+	Registry(Failing_Assertions_Test)
 	{
-		Register_Testcase(Failing_Assertions_Test, test_Assert_True)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_False)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_Null)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_NotNull)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_EQ)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_NEQ)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_GT)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_LT)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_GE)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_LE)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_Throw)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_Throw_empty)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_NoThrow)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_ThrowAny)
-		Register_Testcase(Failing_Assertions_Test, test_Assert_ThrowNone)
-		Register_Testcase(Failing_Assertions_Test, test_unhandled_exception)
-	}
-	End_Testcase_Registration(Failing_Assertions_Test)
-End_Test(Failing_Assertions_Test)
+		Register(Failing_Assertions_Test, test_AssertTrue_false)
+		Register(Failing_Assertions_Test, test_AssertFalse_true)
+		Register(Failing_Assertions_Test, test_AssertNull_valid)
+		Register(Failing_Assertions_Test, test_AssertNotNull_null)
+		Register(Failing_Assertions_Test, test_AssertEQ_inequal)
+		Register(Failing_Assertions_Test, test_AssertNEQ_equal)
+		Register(Failing_Assertions_Test, test_AssertGT_equal)
+		Register(Failing_Assertions_Test, test_AssertGT_less)
+		Register(Failing_Assertions_Test, test_AssertLT_equal)
+		Register(Failing_Assertions_Test, test_AssertLT_greater)
+		Register(Failing_Assertions_Test, test_AssertGE_less)
+		Register(Failing_Assertions_Test, test_AssertLE_greater)
+		Register(Failing_Assertions_Test, test_AssertThrow_throw_unexpected)
+		Register(Failing_Assertions_Test, test_AssertThrow_nothrow)
+		Register(Failing_Assertions_Test, test_AssertNoThrow_throw_expected)
+		Register(Failing_Assertions_Test, test_AssertThrowAny_nothrow)
+		Register(Failing_Assertions_Test, test_AssertThrowNone_throw)
+		Register(Failing_Assertions_Test, test_unhandled_exception_throw)
+	};
+
+} TestEnd(Failing_Assertions_Test);
 
 template <typename T> using reporter_t = pptest::colored_printer<T>;
 // template <typename T> using reporter_t = pptest::std_printer<T>;
 
-Begin_Test(Assertions_Test)
-
-
-	Begin_Testcase(Assertions_Test, test_Passing_Assertions)
+Test(Assertions_Test)
+{
+	Testcase(Assertions_Test, test_Passing_Assertions)
 	{
-		auto sub_reporter                    = reporter_t<Passing_Assertions_Test>(pptest::only_failing);
+		auto reporter                        = reporter_t<Passing_Assertions_Test>(pptest::only_failing);
 		auto passing_assertions_test_summary = pptest::test_summary {};
+		Passing_Assertions_Test().run_all(reporter, &passing_assertions_test_summary, 0);
+		ExpectEQ(passing_assertions_test_summary.passing_assertions, 40);
+		AssertEQ(passing_assertions_test_summary.failing_assertions, 0);
+	} TestcaseEnd(Assertions_Test, test_Passing_Assertions);
 
-		Passing_Assertions_Test().run_all(sub_reporter, &passing_assertions_test_summary, 0);
-		Assert_EQ(passing_assertions_test_summary.failing_assertions, 0);
-	}
-	End_Testcase(Assertions_Test, test_Passing_Assertions)
-
-	Begin_Testcase(Assertions_Test, test_Failing_Assertions)
+	Testcase(Assertions_Test, test_Failing_Assertions)
 	{
-		auto sub_reporter                    = reporter_t<Failing_Assertions_Test>(pptest::only_passing);
+		auto reporter                        = reporter_t<Failing_Assertions_Test>(pptest::only_passing);
 		auto failing_assertions_test_summary = pptest::test_summary {};
+		Failing_Assertions_Test().run_all(reporter, &failing_assertions_test_summary, 0);
+		ExpectEQ(failing_assertions_test_summary.failing_assertions, 34);
+		AssertEQ(failing_assertions_test_summary.passing_assertions, 0);
+	} TestcaseEnd(Assertions_Test, test_Failing_Assertions);
 
-		Failing_Assertions_Test().run_all(sub_reporter, &failing_assertions_test_summary, 0);
-		Assert_EQ(failing_assertions_test_summary.passing_assertions, 0);
-	}
-	End_Testcase(Assertions_Test, test_Failing_Assertions)
-
-	Begin_Testcase_Registration(Assertions_Test)
+	Registry(Assertions_Test)
 	{
-		Register_Testcase(Assertions_Test, test_Passing_Assertions)
-		Register_Testcase(Assertions_Test, test_Failing_Assertions)
-	}
-	End_Testcase_Registration(Assertions_Test)
-End_Test(Assertions_Test)
+		Register(Assertions_Test, test_Passing_Assertions)
+		Register(Assertions_Test, test_Failing_Assertions)
+	};
+
+} TestEnd(Assertions_Test);
 
 
 int main()
