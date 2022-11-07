@@ -2,7 +2,7 @@
  * @file pptest
  * @author Natnael (the.defalt8@gmail.com)
  * @brief Unit-Testing library
- * @version 1.6.30
+ * @version 1.7.32
  * @date 2022-11-01
  * 
  * @copyright Copyright (c) 2022 MIT License
@@ -87,7 +87,7 @@
 
 namespace pptest {
 
-static constexpr struct Version { uint16_t major = 1, minor = 6, patch = 30; } version {};
+static constexpr struct Version { uint16_t major = 1, minor = 7, patch = 32; } version {};
 
 using cstring_t = char const *;
 
