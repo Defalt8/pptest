@@ -14,48 +14,60 @@ char to_hex_char(int hex_)
 
 Test(to_hex_char_test)
 {
-	Testcase(to_hex_char_test, test_0_to_9)
+	TestInit(to_hex_char_test);
+
+	// Called before each testcase. Can skip if you throw something.
+	PreRun() 
+	{
+		// if(&_testcase_ == &_test_never_throw) 
+		// 	throw 0;
+	}  
+	
+	// Called after each testcase
+	PostRun() {} 
+
+	Testcase(test_0_to_9)
 	{
 		for(int i = 0; i < 10; ++i)
 			AssertEQ(to_hex_char(i), char('0' + i));
-	} TestcaseEnd(to_hex_char_test, test_0_to_9);
+	} TestcaseEnd(test_0_to_9);
 
-	Testcase(to_hex_char_test, test_A_to_F)
+	Testcase(test_A_to_F)
 	{
 		for(int i = 0xA; i <= 0xF; ++i)
 			AssertEQ(to_hex_char(i), char('A' + (i - 0xA)));
-	} TestcaseEnd(to_hex_char_test, test_A_to_F);
+	} TestcaseEnd(test_A_to_F);
 
-	Testcase(to_hex_char_test, test_invalid_positive_ret_0)
+	Testcase(test_invalid_positive_ret_0)
 	{
 		for(int i = 0x10; i <= 0x12; ++i)
 			AssertEQ(to_hex_char(i), '0');
-	} TestcaseEnd(to_hex_char_test, test_invalid_positive_ret_0);
+	} TestcaseEnd(test_invalid_positive_ret_0);
 
-	Testcase(to_hex_char_test, test_invalid_negative_ret_0)
+	Testcase(test_invalid_negative_ret_0)
 	{
 		for(int i = -2; i < 0; ++i)
 			AssertEQ(to_hex_char(i), '0');
-	} TestcaseEnd(to_hex_char_test, test_invalid_negative_ret_0);
+	} TestcaseEnd(test_invalid_negative_ret_0);
 
-	Testcase(to_hex_char_test, test_never_throw)
+	Testcase(test_never_throw)
 	{
 		ExpectThrowNone(to_hex_char(0));
 		ExpectThrowNone(to_hex_char(0xF));
 		ExpectThrowNone(to_hex_char(-1));
 		ExpectThrowNone(to_hex_char(0x10));
-	} TestcaseEnd(to_hex_char_test, test_never_throw);
+	} TestcaseEnd(test_never_throw);
 
-	Registry(to_hex_char_test)
-	{
-		Register(to_hex_char_test, test_0_to_9)
-		Register(to_hex_char_test, test_A_to_F)
-		Register(to_hex_char_test, test_invalid_positive_ret_0)
-		Register(to_hex_char_test, test_invalid_negative_ret_0)
-		Register(to_hex_char_test, test_never_throw)
-	};
+};
 
-} TestEnd(to_hex_char_test);
+TestRegistry(to_hex_char_test)
+{
+	Register(test_0_to_9)
+	Register(test_A_to_F)
+	Register(test_invalid_positive_ret_0)
+	Register(test_invalid_negative_ret_0)
+	Register(test_never_throw)
+};
 
 
 template <typename T> using reporter_t = pptest::colored_printer<T>;

@@ -27,19 +27,22 @@
  * 
  *     Test(TestID)
  *     {
- *       Prerun(TestcaseID) {}
- *       Postrun(TestcaseID) {}
+ *        TestInit(TestID);
  * 
- *       Testcase(TestID,TestcaseID)
- *       {
- *       } TestcaseEnd(TestID,TestcaseID);
+ *        PreRun() {}  // called before each testcase. you can throw. 
+ *                     //  It will skip the testcase.
+ *        PostRun() {} // called after each testcase. no throwing.
  * 
- *       Registry(TestID)
- *       {
- *           Register(TestID, TestcaseID)
- *       };
+ *        Testcase(TestcaseID)
+ *        {
+ *        } TestcaseEnd(TestcaseID);
+ *
+ *     };
  * 
- *     } TestEnd(TestID);
+ *     TestRegistry(TestID)
+ *     {
+ *         Register(TestcaseID)
+ *     };
  * 
  *  - Assertion macros -- Asserts break/return on failure while Expects do not.
  * 
@@ -201,8 +204,8 @@ class Test
  public:
 	virtual ~Test() = default;
 	
-	virtual void prerun(pptest::Testcase<C> & testcase_)  {}
-	virtual void postrun(pptest::Testcase<C> & testcase_, int passing_, int failing_) noexcept {}
+	virtual void pre_run(pptest::Testcase<C> & testcase_)  {}
+	virtual void post_run(pptest::Testcase<C> & testcase_, int passing_, int failing_) noexcept {}
 
 	template <template <typename...> class R,
 		typename = decltype(static_cast<Reporter<C> *>((R<C> *)nullptr))> 
@@ -234,20 +237,18 @@ class Test
 			int passing_ = 0;
 			int failing_ = 0;
 			auto & testcase = *(test_.*testcase_ptr);
+			try         { pre_run(testcase); }
+			catch(...)  { continue; }
 			reporter_.report_testcase_run(test_, testcase, depth_);
-			try 
-			{
-				prerun(testcase);
-				testcase.run(reporter_, passing_, failing_, depth_);
-			}
-			catch(Assertion const & ex)
+			try { testcase.run(reporter_, passing_, failing_, depth_); }
+			catch(Assertion const &)
 			{}
 			catch(...)
 			{
 				++failing_;
 				reporter_.report_unhandled_exception(test_, testcase, depth_);
 			}
-			postrun(testcase, passing_, failing_);
+			post_run(testcase, passing_, failing_);
 			reporter_.report_testcase_end(test_, testcase, passing_, failing_, depth_);
 			if(failing_ > 0)
 				++total_failing_;
@@ -547,56 +548,52 @@ template <class C> using testcase  = Testcase<C>;
 #define TESTCASE_ID(...) _##__VA_ARGS__
 #define TESTCASE_PTR_ID(...) _tcptr_##__VA_ARGS__
 
-// Test
+// Test(){ };
 #define Test(TestID) \
 	class TestID : public pptest::Test<TestID>
 
-// PreRun -- called before each run testcase
-#define PreRun(TestID) \
-	void prerun(pptest::Testcase<TestID> & _testcase_) override
-
-// PostRun -- called after each run testcase
-#define PostRun(TestID) \
-	void postrun(pptest::Testcase<TestID> & _testcase_, int _passing_, int _failing_) noexcept override
-
-// Testcase
-#define Testcase(TestID,TestcaseID) \
-	 public: \
-		class TestcaseID : public pptest::Testcase<TestID> \
-		{ \
-			TestcaseID & _testcase_ = *this;\
-		 public: \
-			TestcaseID(TestID & test_) \
-				: Testcase<TestID> { { __FILE__, __LINE__ }, &test_, #TestcaseID } \
-			{} \
-			void run(pptest::Reporter<TestID> & _reporter_, int & _passing_, int & _failing_, int _depth_ = 0) override 
-
-// TestcaseEnd
-#define TestcaseEnd(TestID,TestcaseID) \
-		} TESTCASE_ID(TestcaseID) { *this }; \
-	 private: \
-		pptest::Testcase<TestID> * const TESTCASE_PTR_ID(TestcaseID) = &TESTCASE_ID(TestcaseID); \
-	 public:
-
-// Registry of testcases. Use Register(TestID,TestcaseID) inside
-#define Registry(TestID) \
+// TestInit(TestID);
+#define TestInit(TestID) \
 		friend class pptest::Test<TestID>; \
+		friend class pptest::Testcase<TestID>; \
+		using _pptest_test_t = TestID; \
 	 public: \
 		TestID() \
 			: pptest::Test<TestID> { { __FILE__, __LINE__ }, *this, #TestID } \
 		{} \
-	 private: \
-		static constexpr thread_local pptest::Testcase<TestID> * const TestID::* \
-		_pptest_testcase_mptrs[] \
+		static thread_local pptest::Testcase<_pptest_test_t> * const TestID::* _pptest_testcase_mptrs[]
 
-// Register testcase
-#define Register(TestID, TestcaseID) \
-			&TestID::TESTCASE_PTR_ID(TestcaseID),
+// PreRun(){} -- called before each testcase is run 
+#define PreRun() \
+	void pre_run(pptest::Testcase<_pptest_test_t> & _testcase_) override
 
-// TestEnd
-#define TestEnd(TestID) \
-	; \
-	constexpr thread_local pptest::Testcase<TestID> * const TestID::* \
-		TestID::_pptest_testcase_mptrs[];
+// PostRun(){} -- called after each testcase is run
+#define PostRun() \
+	void post_run(pptest::Testcase<_pptest_test_t> & _testcase_, int _passing_, int _failing_) noexcept override
+
+// Testcase(TestcaseID) {}
+#define Testcase(TestcaseID) \
+	 public: \
+		class TestcaseID : public pptest::Testcase<_pptest_test_t> \
+		{ \
+			TestcaseID & _testcase_ = *this; \
+		 public: \
+			TestcaseID(_pptest_test_t & test_) \
+				: Testcase<_pptest_test_t> { { __FILE__, __LINE__ }, &test_, #TestcaseID } \
+			{} \
+			void run(pptest::Reporter<_pptest_test_t> & _reporter_, int & _passing_, int & _failing_, int _depth_ = 0) override 
+
+// TestcaseEnd(TestcaseID);
+#define TestcaseEnd(TestcaseID) \
+		} TESTCASE_ID(TestcaseID) { *this }; \
+		pptest::Testcase<_pptest_test_t> * const TESTCASE_PTR_ID(TestcaseID) = &TESTCASE_ID(TestcaseID)
+
+// TestRegistry(TestID){}; testcase registry definition. Use Register(TestID,TestcaseID) inside
+#define TestRegistry(TestID) \
+	thread_local pptest::Testcase<TestID> * const TestID::* TestID::_pptest_testcase_mptrs[]
+
+// Register(TestcaseID) testcase
+#define Register(TestcaseID) \
+			&_pptest_test_t::TESTCASE_PTR_ID(TestcaseID),
 
 #endif // PPTEST
