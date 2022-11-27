@@ -113,6 +113,13 @@ struct Position
 {
 	cstring_t file = nullptr;
 	int       line = 0;
+
+	constexpr Position() = default;
+
+	constexpr Position(cstring_t file_, int line_)
+		: file { file_ }
+		, line { line_ }
+	{}
 };
 
 struct Assertion
@@ -122,6 +129,22 @@ struct Assertion
 	Position  position  = {};
 	bool      breaking  = false;
 	Status    status    = Status::Unknown;
+
+	constexpr Assertion() = default;
+
+	constexpr Assertion(
+		  cstring_t command_
+		, cstring_t assertion_
+		, Position  position_
+		, bool      breaking_
+		, Status    status_ = Status::Unknown
+	)
+		: command   { command_ }
+		, assertion { assertion_ }
+		, position  { position_ }
+		, breaking  { breaking_ }
+		, status    { status_ }
+	{}
 };
 
 struct TestSummary
@@ -130,6 +153,21 @@ struct TestSummary
 	int failing = 0;
 	int passing_assertions = 0;
 	int failing_assertions = 0;
+
+	TestSummary() = default;
+
+	TestSummary(
+		  int passing_
+		, int failing_
+		, int passing_assertions_
+		, int failing_assertions_
+	)
+		: passing            { passing_ }
+		, failing            { failing_ }
+		, passing_assertions { passing_assertions_ }
+		, failing_assertions { failing_assertions_ }
+	{}
+
 };
 
 struct ReporterSettings
@@ -143,17 +181,38 @@ struct ReporterSettings
 	bool report_test_end = true;
 	bool report_unhandled_exception = true;
 	
+	constexpr ReporterSettings() = default;
+
+	constexpr ReporterSettings(
+		  bool optimistic_
+		, bool report_pass_
+		, bool report_fail_
+		, bool report_testcase_run_
+		, bool report_testcase_end_
+		, bool report_test_run_
+		, bool report_test_end_
+		, bool report_unhandled_exception_
+	)
+		: optimistic                 { optimistic_ }
+		, report_pass                { report_pass_ }
+		, report_fail                { report_fail_ }
+		, report_testcase_run        { report_testcase_run_ }
+		, report_testcase_end        { report_testcase_end_ }
+		, report_test_run            { report_test_run_ }
+		, report_test_end            { report_test_end_ }
+		, report_unhandled_exception { report_unhandled_exception_ }
+	{}
 };
 
-static constexpr ReporterSettings quiet        = { true, false, false, false, false, false, false, false };
-static constexpr ReporterSettings verbose      = { true, true, true, true, true, true, true, true };
-static constexpr ReporterSettings normal       = { true, false, true, true, true, true, true, true };
-static constexpr ReporterSettings minimal1     = { true, false, true, false, true, false, true, true };
-static constexpr ReporterSettings minimal2     = { true, false, true, false, false, true, true, true };
-static constexpr ReporterSettings minimal3     = { true, false, true, false, false, false, true, true };
-static constexpr ReporterSettings minimal4     = { true, false, true, false, false, false, false, true };
-static constexpr ReporterSettings only_failing = { true, false, true, false, false, false, false, true };
-static constexpr ReporterSettings only_passing = { true, true, false, false, false, false, false, false };
+static constexpr ReporterSettings quiet        { true, false, false, false, false, false, false, false };
+static constexpr ReporterSettings verbose      { true, true, true, true, true, true, true, true };
+static constexpr ReporterSettings normal       { true, false, true, true, true, true, true, true };
+static constexpr ReporterSettings minimal1     { true, false, true, false, true, false, true, true };
+static constexpr ReporterSettings minimal2     { true, false, true, false, false, true, true, true };
+static constexpr ReporterSettings minimal3     { true, false, true, false, false, false, true, true };
+static constexpr ReporterSettings minimal4     { true, false, true, false, false, false, false, true };
+static constexpr ReporterSettings only_failing { true, false, true, false, false, false, false, true };
+static constexpr ReporterSettings only_passing { true, true, false, false, false, false, false, false };
 
 template <class C>
 class Reporter
@@ -258,8 +317,8 @@ class Test
 			total_failing_assertions_ += failing_;
 		}
 		reporter_.report_test_end(test_, total_passing_, total_failing_, depth_);
-		if(summary_out_)
-			*summary_out_ = { total_passing_, total_failing_, total_passing_assertions_, total_failing_assertions_ };
+		if(summary_out_ != nullptr)
+			*summary_out_ = pptest::TestSummary(total_passing_, total_failing_, total_passing_assertions_, total_failing_assertions_);
 		return total_failing_;
 	}
 	
@@ -466,14 +525,14 @@ template <class C> using testcase  = Testcase<C>;
 
 #define PPTEST_ASSERT_IMPL(Command_, Breaking_, Pass_, ...) \
 		_testcase_._on_assert(Pass_, _reporter_, _passing_, _failing_, \
-			pptest::Assertion { Command_,#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking_ }, _depth_)
+			pptest::Assertion(Command_,#__VA_ARGS__, pptest::Position(__FILE__, __LINE__), Breaking_), _depth_)
 
 #define PPTEST_ASSERT_THROW_IMPL(Command_, Breaking_, ExpectThrow_, Exception_, ...) \
 	{ \
 		bool caught_ = false;\
 		try { __VA_ARGS__; } catch(Exception_) { caught_ = true; } catch(...) { caught_ = false; } \
 		_testcase_._on_assert((ExpectThrow_ == caught_), _reporter_, _passing_, _failing_, \
-			pptest::Assertion { Command_,#Exception_", "#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking_ }, _depth_); \
+			pptest::Assertion(Command_,#Exception_", "#__VA_ARGS__, pptest::Position(__FILE__, __LINE__), Breaking_), _depth_); \
 	}
 
 #define PPTEST_ASSERT_THROW_ANY_IMPL(Command_, Breaking_, ExpectThrow_, ...) \
@@ -481,7 +540,7 @@ template <class C> using testcase  = Testcase<C>;
 		bool caught_ = false;\
 		try { __VA_ARGS__; } catch(...) { caught_ = true; } \
 		_testcase_._on_assert((ExpectThrow_ == caught_), _reporter_, _passing_, _failing_, \
-			pptest::Assertion { Command_,#__VA_ARGS__, { __FILE__, __LINE__ }, Breaking_ }, _depth_); \
+			pptest::Assertion(Command_,#__VA_ARGS__, pptest::Position(__FILE__, __LINE__), Breaking_), _depth_); \
 	}
 
 
