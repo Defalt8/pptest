@@ -1,7 +1,9 @@
 cmake_minimum_required( VERSION 3.4 )
 project( pptest VERSION 1.7.32 LANGUAGES CXX )
 
-option( BUILD_TESTS ON )
+set( BUILD_TESTS ON CACHE BOOL "" )
+set( CMAKE_CXX_STANDARD 11 )
+set( CMAKE_CXX_STANDARD_REQUIRED TRUE )
 
 add_library( pptest INTERFACE )
 target_include_directories( pptest INTERFACE include )
